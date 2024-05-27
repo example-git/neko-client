@@ -20,28 +20,28 @@
   @import '../assets/styles/_variables.scss';
 
   .header {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+
+  .neko {
     flex: 1;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 100%;
-
-    .neko {
-      flex: 1;
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      width: 150px;
-      margin-left: 20px;
+    align-items: center; 
+    width: 150px;
+    margin-left: 20px; 
 
-      .logo {
-        font-size: 30px;
-        line-height: 30px;
+    .logo {
+      font-size: 30px;
+      line-height: 30px;
 
-        b {
-          font-weight: 900;
-        }
+      b {
+        font-weight: 900;
       }
+    }
 
       .server {
         max-width: 850px;
@@ -82,6 +82,7 @@
       }
     }
   }
+}
 </style>
 
 <script lang="ts" setup>
@@ -105,8 +106,10 @@ async function setUrl() {
 
   await props.neko.setUrl(url.value)
 }
-
+// implemented the toggle for the right side panel
+const emits = defineEmits(['toggle'])
 function toggleMenu() {
-  props.neko.toggleSide()
+  //props.neko.toggleSide()
+  emits('toggle');
 }
 </script>

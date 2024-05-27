@@ -1,6 +1,42 @@
 <template>
-  <div ref="component" class="neko-component">
-    <div ref="container" class="neko-container">
+    <div ref="fullscreenContainer" class="fullscreen-container"> 
+      <div ref="component" class="neko-component">
+      <div ref="container" class="neko-container">
+      <button @click="enter" class="fullscreen-button small-buttons" v-if="!isFullscreen">
+        <i class="fas fa-expand small-buttons"></i>
+      </button>
+      <button @click="exit" class="fullscreen-button small-buttons" v-if="isFullscreen">
+        <i class="fas fa-compress small-buttons"></i>
+      </button>
+      <div class="screen-config-wrapper" v-if="is_admin">
+          <div class="cog-icon-wrapper">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 448 512"
+              class="cog-icon"
+              @click="toggleDropdown()"
+              @click.away="toggleDropdown()"
+              @click.stop="toggleDropdown()"
+              tabindex="0"
+            >
+              <path
+                d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"
+              />
+            </svg>
+            <div v-show="showScreenConfigMenu" class="screen-config-menu">
+              <div
+                v-for="config in state.screen.configurations"
+                :key="`${config.width}x${config.height}@${config.rate}`"
+                @click="screenConfiguration = `${config.width}x${config.height}@${config.rate}`; toggleDropdown()"
+                @click.stop="toggleDropdown()"
+                @click.away="toggleDropdown()"
+                class="screen-config-option"
+              >
+                {{ `${config.width}x${config.height}@${config.rate}` }}
+              </div>
+            </div>
+          </div>
+        </div>
       <video ref="video" playsinline></video>
       <Screencast
         v-show="screencast && screencastReady"
@@ -42,13 +78,43 @@
         @mobileKeyboardOpen="state.mobile_keyboard_open = $event"
       />
     </div>
-  </div>
+    </div>
+    </div>
 </template>
 
 <style lang="scss">
   .neko-component {
     width: 100%;
     height: 100%;
+  }
+
+  .fullscreen-container {
+  width: 100%;
+  height: 100%;
+  position: relative; /* Ensure proper positioning */ 
+  }
+ 
+  .fullscreen-container:fullscreen { 
+  width: 100%;
+  height: 100%;
+  position: relative; /* Ensure proper positioning */ 
+  }
+
+
+  .fullscreen-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 9999; // Choose a value higher than other elements
+    .small-buttons {
+      width: fit-content;
+    }
   }
 
   .neko-container {
@@ -69,10 +135,86 @@
       }
     }
   }
+.screen-config-wrapper {
+  position: absolute;
+  top: 10px;
+  right: 50px;
+  z-index: 9999;
+}
+
+.cog-icon-wrapper {
+  cursor: pointer;
+  position: relative;
+}
+
+.cog-icon {
+  position: absolute;
+  top: 1px;
+  right: 5px;
+  padding: 10px;
+  width: 20px;
+  height: 20px;
+  z-index: 9999;
+  cursor: pointer;
+  fill: white;
+}
+
+.screen-config-menu {
+  position: absolute;
+  top: 30px; /* Adjust position relative to the cog icon */
+  right: 0;
+  border: 1px solid #cccccca2;
+  border-radius: 5px;
+  width: max-content; /* Adjust as needed */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+  .screen-config-option {
+    text-align: center;
+    padding: 2px;
+    border:rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+  }
+  .screen-config-option:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.688); /* Light gray for even rows */
+    padding-right: 5px;
+    padding-left: 5px;
+
+  }
+  .screen-config-option:nth-child(odd) {
+    background-color: rgba(95, 95, 95, 0.688); /* Slightly darker gray for odd rows */
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .screen-config-option:hover {
+    color: black;
+    background-color: #ffffffa3;
+  }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+  opacity: 0;
+}
+
+fullscreenContainer::-webkit-media-controls-fullscreen-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px;
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 9999; // Choose a value higher than other elements
+}
 </style>
 
 <script lang="ts" setup>
-import { ref, watch, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, computed, reactive, onMounted, onBeforeUnmount, defineEmits, onUnmounted } from 'vue'
 
 //export * as ApiModels from './api/models'
 //export * as StateModels from './types/state'
@@ -98,13 +240,20 @@ import type { CursorDrawFunction, InactiveCursorDrawFunction, Dimension } from '
 import Overlay from './overlay.vue'
 import Screencast from './screencast.vue'
 import Cursors from './cursors.vue'
+import { useFullscreen } from '@vueuse/core'
 
 const SCREEN_SYNC_THROTTLE = 500 // wait 500ms before reacting to automatic screen size change
 
+const isFirstMount = ref(true)
 const component = ref<HTMLElement | null>(null)
 const container = ref<HTMLElement | null>(null)
+const fullscreenContainer = ref<HTMLElement | null>(null);
 const video = ref<HTMLVideoElement | null>(null)
 const overlay = ref<typeof Overlay | null>(null)
+const showScreenConfigMenu = ref(false)
+const volume = ref(100)
+
+const { isFullscreen, enter, exit, toggle } = useFullscreen(fullscreenContainer)
 
 // fallback image for webrtc reconnections:
 // chrome shows black screen when closing webrtc connection, that's why
@@ -127,7 +276,12 @@ const props = defineProps({
   fps: { type: Number, default: 0 },
   // auto / touch / mouse
   inputMode: { type: String, default: 'auto' },
+  showModal: Boolean,
+  isFirstMount: Boolean,
 })
+
+const showModal = reactive<{ value: boolean }>({ value: props.showModal })
+
 
 /////////////////////////////
 // Public state
@@ -218,6 +372,7 @@ const state = reactive<NekoState>({
   },
   cursors: [],
   mobile_keyboard_open: false,
+  watchingSessions: {},
 })
 
 /////////////////////////////
@@ -295,10 +450,10 @@ function setUrl(url?: string) {
   state.connection.token = token // TODO: Vue.Set
 
   // try to authenticate and connect
-  if (props.autoconnect) {
+  if (props.autoconnect) {      
     try {
       authenticate()
-      connect()
+    connect()
     } catch {}
   }
 }
@@ -321,8 +476,8 @@ async function authenticate(token?: string) {
     state.connection.token = token // TODO: Vue.Set
   }
 
-  await api.default.whoami()
-  state.authenticated = true // TODO: Vue.Set
+    await api.default.whoami()
+    state.authenticated = true // TODO: Vue.Set
 
   if (token && props.autologin) {
     localStorage.setItem('neko_session', token)
@@ -334,15 +489,15 @@ async function login(username: string, password: string) {
     throw new Error('client already authenticated')
   }
 
-  const res = await api.default.login({ username, password })
-  if (res.data.token) {
-    api.setToken(res.data.token)
-    state.connection.token = res.data.token // TODO: Vue.Set
+      const res = await api.default.login({ username, password })
+      if (res.data.token) {
+        api.setToken(res.data.token)
+        state.connection.token = res.data.token // TODO: Vue.Set
 
     if (props.autologin) {
-      localStorage.setItem('neko_session', res.data.token)
+        localStorage.setItem('neko_session', res.data.token)
+      }
     }
-  }
 
   state.authenticated = true // TODO: Vue.Set
 }
@@ -609,15 +764,34 @@ onMounted(() => {
       { once: true },
     )
   })
-})
+
+watch(() => state.connection.websocket.connected, (connected) => {
+  if (connected) {
+    getvolume();
+    setVolume(volume.value / 100);
+  }
+});
+
+function getvolume() {
+  if (!localStorage.getItem('volume')) {
+    localStorage.setItem('volume', '100')
+  }
+  let val = localStorage.getItem('volume') || '100';
+  volume.value = parseInt(val)
+  }
 
 onBeforeUnmount(() => {
+  localStorage.setItem('volume', `${volume.value}`) // save volume;
   observer.disconnect()
   connection.destroy()
   clear()
 
   // removes users first interaction events
   autoUnmute()
+})
+
+onUnmounted(() => {
+  localStorage.setItem('volume', `${volume.value}`) // save volume;
 })
 
 function updateKeyboard() {
@@ -736,6 +910,22 @@ function onConnectionTypeChange(type: 'fallback' | 'webrtc' | 'none') {
 
 watch(() => state.connection.type, onConnectionTypeChange)
 
+
+const screenConfiguration = ref(`${state.screen.size.width}x${state.screen.size.height}@${state.screen.size.rate}`)
+function setScreenConfiguration(value: string) {
+  let [width, height, rate] = value.split(/[@x]/)
+  setScreenSize(parseInt(width), parseInt(height), parseInt(rate))
+}
+function toggleDropdown() {
+  showScreenConfigMenu.value = !showScreenConfigMenu.value;
+}
+
+watch(() => screenConfiguration.value, (val) => {
+  if (is_admin.value) {
+    setScreenConfiguration(val)
+  }
+})
+
 function clear() {
   // destroy video
   if (video.value) {
@@ -756,6 +946,7 @@ function clear() {
   state.screen.sync.enabled = false // TODO: Vue.Set
   state.session_id = null // TODO: Vue.Set
   state.sessions = {} // TODO: Vue.Set
+  state.watchingSessions = {}
   state.settings =  {
     private_mode: false,
     locked_logins: false,
@@ -810,6 +1001,8 @@ defineExpose({
   sendMessage,
   withApi,
   uploadDrop,
+  isFirstMount,
+  showModal,
   // public state
   state,
   // computed

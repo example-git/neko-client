@@ -25,127 +25,240 @@
       </tr>
     </table>
 
-    <p class="title">
-      <span>Sessions</span>
-    </p>
-
-    <div
+    <div  
+      v-if="props.hideNewMemberForm"
       class="member"
       :class="{
         'is-admin': neko.is_admin,
       }"
-      v-for="(session, id) in sessions"
-      :key="'session-' + id"
+      v-for="({id, profile, state}) in watchingUsers"
+      :key="'session-' + id" 
     >
       <div class="topbar">
         <div class="name">
           <i v-if="neko.is_admin" class="fa fa-trash-alt" @click="memberRemove(id)" title="remove" />
-          {{ session.profile.name }}
+          {{ profile.name }}
         </div>
         <div class="controls">
           <i
             class="fa fa-shield-alt"
             :class="{
-              'state-has': session.profile.is_admin,
+              'state-has': profile.is_admin,
             }"
-            @click="neko.is_admin && updateProfile(id, { is_admin: !session.profile.is_admin })"
+            @click="neko.is_admin && updateProfile(id, { is_admin: !profile.is_admin })"
             title="is_admin"
           />
           <i
             class="fa fa-lock-open"
             :class="{
-              'state-has': session.profile.can_login,
+              'state-has': profile.can_login,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_login: !session.profile.can_login })"
+            @click="neko.is_admin && updateProfile(id, { can_login: !profile.can_login })"
             title="can_login"
           />
           <i
             class="fa fa-sign-in-alt"
             :class="{
-              'state-has': session.profile.can_connect,
-              'state-is': session.state.is_connected,
-              'state-disabled': !session.profile.can_login,
+              'state-has': profile.can_connect,
+              'state-is': state.is_connected,
+              'state-disabled': !profile.can_login,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_connect: !session.profile.can_connect })"
+            @click="neko.is_admin && updateProfile(id, { can_connect: !profile.can_connect })"
             title="can_connect"
           />
           <i
             class="fa fa-desktop"
             :class="{
-              'state-has': session.profile.can_watch,
-              'state-is': session.state.is_watching,
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-has': profile.can_watch,
+              'state-is': state.is_watching,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_watch: !session.profile.can_watch })"
+            @click="neko.is_admin && updateProfile(id, { can_watch: !profile.can_watch })"
             title="can_watch"
           />
           <i
             class="fa fa-keyboard"
             :class="{
-              'state-has': session.profile.can_host,
+              'state-has': profile.can_host,
               'state-is': neko.state.control.host_id == id,
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_host: !session.profile.can_host })"
+            @click="neko.is_admin && updateProfile(id, { can_host: !profile.can_host })"
             title="can_host"
           />
           <i
             class="fa fa-microphone"
             :class="{
-              'state-has': session.profile.can_share_media,
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-has': profile.can_share_media,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_share_media: !session.profile.can_share_media })"
+            @click="neko.is_admin && updateProfile(id, { can_share_media: !profile.can_share_media })"
             title="can_share_media"
           />
           <i
             class="fa fa-clipboard"
             :class="{
-              'state-has': session.profile.can_access_clipboard,
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-has': profile.can_access_clipboard,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
-            @click="neko.is_admin && updateProfile(id, { can_access_clipboard: !session.profile.can_access_clipboard })"
+            @click="neko.is_admin && updateProfile(id, { can_access_clipboard: !profile.can_access_clipboard })"
             title="can_access_clipboard"
           />
           <i
             class="fa fa-mouse"
             :class="{
-              'state-has': session.profile.sends_inactive_cursor,
+              'state-has': profile.sends_inactive_cursor,
               'state-is':
-                session.profile.sends_inactive_cursor &&
+                profile.sends_inactive_cursor &&
                 neko.state.settings.inactive_cursors &&
                 neko.state.cursors.some((e:any) => e.id == id),
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
             @click="
-              neko.is_admin && updateProfile(id, { sends_inactive_cursor: !session.profile.sends_inactive_cursor })
+              neko.is_admin && updateProfile(id, { sends_inactive_cursor: !profile.sends_inactive_cursor })
             "
             title="sends_inactive_cursor"
           />
           <i
             class="fa fa-mouse-pointer"
             :class="{
-              'state-has': session.profile.can_see_inactive_cursors,
-              'state-disabled': !session.profile.can_login || !session.profile.can_connect,
+              'state-has': profile.can_see_inactive_cursors,
+              'state-disabled': !profile.can_login || !profile.can_connect,
             }"
             @click="
               neko.is_admin &&
-                updateProfile(id, { can_see_inactive_cursors: !session.profile.can_see_inactive_cursors })
+                updateProfile(id, { can_see_inactive_cursors: !profile.can_see_inactive_cursors })
             "
             title="can_see_inactive_cursors"
           />
-          <i class="fa fa-puzzle-piece state-has" @click="showPlugins(id, session.profile)" title="plugins" />
+          <i class="fa fa-puzzle-piece" @click="neko.is_admin && showPlugins(id, profile)" title="plugins" />
         </div>
       </div>
     </div>
 
-    <p class="title">
+    <p class="title" v-if="!props.hideNewMemberForm">
+      <span>Sessions</span>
+    </p>
+
+    <div 
+      v-if="!props.hideNewMemberForm"
+      class="member"
+      :class="{
+        'is-admin': neko.is_admin,
+      }"
+      v-for="({id, profile, state}) in sessions"
+      :key="'session-' + id" 
+    >
+      <div class="topbar">
+        <div class="name">
+          <i v-if="neko.is_admin" class="fa fa-trash-alt" @click="memberRemove(id)" title="remove" />
+          {{ profile.name }}
+        </div>
+        <div class="controls">
+          <i
+            class="fa fa-shield-alt"
+            :class="{
+              'state-has': profile.is_admin,
+            }"
+            @click="neko.is_admin && updateProfile(id, { is_admin: !profile.is_admin })"
+            title="is_admin"
+          />
+          <i
+            class="fa fa-lock-open"
+            :class="{
+              'state-has': profile.can_login,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_login: !profile.can_login })"
+            title="can_login"
+          />
+          <i
+            class="fa fa-sign-in-alt"
+            :class="{
+              'state-has': profile.can_connect,
+              'state-is': state.is_connected,
+              'state-disabled': !profile.can_login,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_connect: !profile.can_connect })"
+            title="can_connect"
+          />
+          <i
+            class="fa fa-desktop"
+            :class="{
+              'state-has': profile.can_watch,
+              'state-is': state.is_watching,
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_watch: !profile.can_watch })"
+            title="can_watch"
+          />
+          <i
+            class="fa fa-keyboard"
+            :class="{
+              'state-has': profile.can_host,
+              'state-is': neko.state.control.host_id == id,
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_host: !profile.can_host })"
+            title="can_host"
+          />
+          <i
+            class="fa fa-microphone"
+            :class="{
+              'state-has': profile.can_share_media,
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_share_media: !profile.can_share_media })"
+            title="can_share_media"
+          />
+          <i
+            class="fa fa-clipboard"
+            :class="{
+              'state-has': profile.can_access_clipboard,
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="neko.is_admin && updateProfile(id, { can_access_clipboard: !profile.can_access_clipboard })"
+            title="can_access_clipboard"
+          />
+          <i
+            class="fa fa-mouse"
+            :class="{
+              'state-has': profile.sends_inactive_cursor,
+              'state-is':
+                profile.sends_inactive_cursor &&
+                neko.state.settings.inactive_cursors &&
+                neko.state.cursors.some((e:any) => e.id == id),
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="
+              neko.is_admin && updateProfile(id, { sends_inactive_cursor: !profile.sends_inactive_cursor })
+            "
+            title="sends_inactive_cursor"
+          />
+          <i
+            class="fa fa-mouse-pointer"
+            :class="{
+              'state-has': profile.can_see_inactive_cursors,
+              'state-disabled': !profile.can_login || !profile.can_connect,
+            }"
+            @click="
+              neko.is_admin &&
+                updateProfile(id, { can_see_inactive_cursors: !profile.can_see_inactive_cursors })
+            "
+            title="can_see_inactive_cursors"
+          />
+          <i class="fa fa-puzzle-piece" @click="neko.is_admin && showPlugins(id, profile)" title="plugins" />
+        </div>
+      </div>
+    </div>
+
+    <p class="title" v-if="!props.hideNewMemberForm">
       <span>Members</span>
       <button @click="membersLoad()">reload</button>
     </p>
 
     <div
       class="member"
+      v-if="!props.hideNewMemberForm"
       :class="{
         'is-admin': neko.is_admin,
       }"
@@ -160,89 +273,56 @@
         <div class="controls">
           <i
             class="fa fa-shield-alt"
-            :class="{
-              'state-has': member.profile.is_admin,
-            }"
+            :class="{'state-has': member.profile.is_admin}"
             @click="neko.is_admin && updateProfile(member.id, { is_admin: !member.profile.is_admin })"
             title="is_admin"
           />
           <i
             class="fa fa-lock-open"
-            :class="{
-              'state-has': member.profile.can_login,
-            }"
+            :class="{'state-has': member.profile.can_login}"
             @click="neko.is_admin && updateProfile(member.id, { can_login: !member.profile.can_login })"
             title="can_login"
           />
           <i
             class="fa fa-sign-in-alt"
-            :class="{
-              'state-has': member.profile.can_connect,
-              'state-disabled': !member.profile.can_login,
-            }"
+            :class="{'state-has': member.profile.can_connect, 'state-disabled': !member.profile.can_login}"
             @click="neko.is_admin && updateProfile(member.id, { can_connect: !member.profile.can_connect })"
             title="can_connect"
           />
           <i
             class="fa fa-desktop"
-            :class="{
-              'state-has': member.profile.can_watch,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
+            :class="{'state-has': member.profile.can_watch, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
             @click="neko.is_admin && updateProfile(member.id, { can_watch: !member.profile.can_watch })"
             title="can_watch"
           />
           <i
             class="fa fa-keyboard"
-            :class="{
-              'state-has': member.profile.can_host,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
+            :class="{'state-has': member.profile.can_host, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
             @click="neko.is_admin && updateProfile(member.id, { can_host: !member.profile.can_host })"
             title="can_host"
           />
           <i
             class="fa fa-microphone"
-            :class="{
-              'state-has': member.profile.can_share_media,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
+            :class="{'state-has': member.profile.can_share_media, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
             @click="neko.is_admin && updateProfile(member.id, { can_share_media: !member.profile.can_share_media })"
             title="can_share_media"
           />
           <i
             class="fa fa-clipboard"
-            :class="{
-              'state-has': member.profile.can_access_clipboard,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
-            @click="
-              neko.is_admin && updateProfile(member.id, { can_access_clipboard: !member.profile.can_access_clipboard })
-            "
+            :class="{'state-has': member.profile.can_access_clipboard, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
+            @click="neko.is_admin && updateProfile(member.id, { can_access_clipboard: !member.profile.can_access_clipboard })"
             title="can_access_clipboard"
           />
           <i
             class="fa fa-mouse"
-            :class="{
-              'state-has': member.profile.sends_inactive_cursor,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
-            @click="
-              neko.is_admin &&
-                updateProfile(member.id, { sends_inactive_cursor: !member.profile.sends_inactive_cursor })
-            "
+            :class="{'state-has': member.profile.sends_inactive_cursor, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
+            @click="neko.is_admin && updateProfile(member.id, { sends_inactive_cursor: !member.profile.sends_inactive_cursor })"
             title="sends_inactive_cursor"
           />
           <i
             class="fa fa-mouse-pointer"
-            :class="{
-              'state-has': member.profile.can_see_inactive_cursors,
-              'state-disabled': !member.profile.can_login || !member.profile.can_connect,
-            }"
-            @click="
-              neko.is_admin &&
-                updateProfile(member.id, { can_see_inactive_cursors: !member.profile.can_see_inactive_cursors })
-            "
+            :class="{'state-has': member.profile.can_see_inactive_cursors, 'state-disabled': !member.profile.can_login || !member.profile.can_connect}"
+            @click="neko.is_admin && updateProfile(member.id, { can_see_inactive_cursors: !member.profile.can_see_inactive_cursors })"
             title="can_see_inactive_cursors"
           />
           <i class="fa fa-puzzle-piece state-has" @click="showPlugins(member.id, member.profile)" title="plugins" />
@@ -250,65 +330,66 @@
       </div>
     </div>
 
-    <table class="new-member" v-if="neko.is_admin">
-      <tr>
-        <td colspan="2" class="name">New Member</td>
-      </tr>
-      <tr>
-        <th>username</th>
-        <td><input type="text" v-model="newUsername" /></td>
-      </tr>
-      <tr>
-        <th>password</th>
-        <td><input type="text" v-model="newPassword" /></td>
-      </tr>
-      <tr>
-        <td colspan="2" class="name" style="text-align: center">Profile</td>
-      </tr>
-      <tr>
-        <th>name</th>
-        <td><input type="text" v-model="newProfile.name" /></td>
-      </tr>
-      <tr>
-        <th>is_admin</th>
-        <td><input type="checkbox" v-model="newProfile.is_admin" /></td>
-      </tr>
-      <tr>
-        <th>can_login</th>
-        <td><input type="checkbox" v-model="newProfile.can_login" /></td>
-      </tr>
-      <tr>
-        <th>can_connect</th>
-        <td><input type="checkbox" v-model="newProfile.can_connect" /></td>
-      </tr>
-      <tr>
-        <th>can_watch</th>
-        <td><input type="checkbox" v-model="newProfile.can_watch" /></td>
-      </tr>
-      <tr>
-        <th>can_host</th>
-        <td><input type="checkbox" v-model="newProfile.can_host" /></td>
-      </tr>
-      <tr>
-        <th>can_share_media</th>
-        <td><input type="checkbox" v-model="newProfile.can_share_media" /></td>
-      </tr>
-      <tr>
-        <th>can_access_clipboard</th>
-        <td><input type="checkbox" v-model="newProfile.can_access_clipboard" /></td>
-      </tr>
-      <tr>
-        <th>sends_inactive_cursor</th>
-        <td><input type="checkbox" v-model="newProfile.sends_inactive_cursor" /></td>
-      </tr>
-      <tr>
-        <th>can_see_inactive_cursors</th>
-        <td><input type="checkbox" v-model="newProfile.can_see_inactive_cursors" /></td>
-      </tr>
-      <tr>
-        <td colspan="2"><button @click="memberCreate">create</button></td>
-      </tr>
-    </table>
+
+    <table class="new-member" v-if="neko.is_admin && !props.hideNewMemberForm">
+    <tr>
+      <td colspan="2" class="name">New Member</td>
+    </tr>
+    <tr>
+      <th>username</th>
+      <td><input type="text" v-model="newUsername" /></td>
+    </tr>
+    <tr>
+      <th>password</th>
+      <td><input type="text" v-model="newPassword" /></td>
+    </tr>
+    <tr>
+      <td colspan="2" class="name" style="text-align: center">Profile</td>
+    </tr>
+    <tr>
+      <th>name</th>
+      <td><input type="text" v-model="newProfile.name" /></td>
+    </tr>
+    <tr>
+      <th>is_admin</th>
+      <td><input type="checkbox" v-model="newProfile.is_admin" /></td>
+    </tr>
+    <tr>
+      <th>can_login</th>
+      <td><input type="checkbox" v-model="newProfile.can_login" /></td>
+    </tr>
+    <tr>
+      <th>can_connect</th>
+      <td><input type="checkbox" v-model="newProfile.can_connect" /></td>
+    </tr>
+    <tr>
+      <th>can_watch</th>
+      <td><input type="checkbox" v-model="newProfile.can_watch" /></td>
+    </tr>
+    <tr>
+      <th>can_host</th>
+      <td><input type="checkbox" v-model="newProfile.can_host" /></td>
+    </tr>
+    <tr>
+      <th>can_share_media</th>
+      <td><input type="checkbox" v-model="newProfile.can_share_media" /></td>
+    </tr>
+    <tr>
+      <th>can_access_clipboard</th>
+      <td><input type="checkbox" v-model="newProfile.can_access_clipboard" /></td>
+    </tr>
+    <tr>
+      <th>sends_inactive_cursor</th>
+      <td><input type="checkbox" v-model="newProfile.sends_inactive_cursor" /></td>
+    </tr>
+    <tr>
+      <th>can_see_inactive_cursors</th>
+      <td><input type="checkbox" v-model="newProfile.can_see_inactive_cursors" /></td>
+    </tr>
+    <tr>
+      <td colspan="2"><button @click="memberCreate">create</button></td>
+    </tr>
+  </table>
   </div>
 </template>
 
@@ -317,7 +398,6 @@
 
   .title {
     padding: 4px;
-    font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -325,13 +405,16 @@
 
   .members {
     display: block;
-    width: 100%;
+    width: 99%;
     overflow: hidden;
+    font-weight: bold;
+    padding-left: 1%;
 
     .member {
       padding: 5px;
-      margin: 5px 0;
-      border: 1px solid white;
+      font-weight: bold;
+      margin: 5px 5px 5px 5px;
+      border: 0px solid white;
       box-sizing: border-box;
 
       &.is-admin .fa {
@@ -407,7 +490,7 @@
 </style>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import type Neko from '@/component/main.vue'
 
 // TODO: get from lib ts?
@@ -415,14 +498,19 @@ import type * as ApiModels from '@/component/api/models'
 import type * as StateModels from '@/component/types/state'
 
 const props = defineProps<{
-  neko: typeof Neko
-}>()
+  neko: typeof Neko;
+  hideNewMemberForm?: boolean;
+}>();
 
 const sessions = computed(() => props.neko.state.sessions as Record<string, StateModels.Session>)
 const membersWithoutSessions = computed(() => {
   return members.value.filter(({ id }: ApiModels.MemberData) => id && !(id in sessions.value)) as ApiModels.MemberData[]
 })
-
+const watchingUsers = computed(() => {
+  return Object.values(sessions.value).filter(
+    (session) => session.state.is_connected || session.state.is_watching
+  )
+})
 const members = ref<ApiModels.MemberData[]>([])
 const plugins = ref<{
   id: string
@@ -451,7 +539,7 @@ newProfile.value = Object.assign({}, defProfile.value)
 async function memberCreate() {
   try {
     const res = await props.neko.members.membersCreate({
-      username: newUsername.value,
+      username: newUsername.value.toLowerCase(), // for consistency in the file type of user creatio
       password: newPassword.value,
       profile: newProfile.value,
     })
@@ -559,7 +647,86 @@ async function savePlugins() {
   }
 }
 
-onMounted(() => {
-  membersLoad(10)
+// Method to pull the actively watching users on client init. Dunno if there's a better way to do this but this is what it took for me to get it to work.
+
+  // Function to save user list to localStorage
+  const saveUserListToCache = () => {
+    if (Object.keys(sessions.value).length > 0) { 
+      localStorage.setItem('cachedUserList', JSON.stringify(sessions.value));
+    }
+  };
+
+  // Function to load user list from localStorage
+  const loadUserListFromCache = () => {
+    const cachedData = localStorage.getItem('cachedUserList');
+    if (cachedData) {
+      sessions.value = JSON.parse(cachedData);
+    }
+  };
+
+  function clearUserListFromCache() {
+    localStorage.removeItem('cachedUserList');
+  }
+
+
+  onMounted(() => {
+    // Load from cache on mount
+    if (props.neko!.isFirstMount) {
+      clearUserListFromCache(); 
+      props.neko!.isFirstMount = false;
+    } else {
+      loadUserListFromCache();
+    }
+
+    if (props.neko!.state.connected) {
+      membersLoad(10); 
+    }
+  });
+
+  // Save to cache before unmount and when sessions.value changes
+  onBeforeUnmount(saveUserListToCache); 
+  watch(sessions, saveUserListToCache, { deep: true });
+
+
+props.neko.events.on('session.created', (id: string, profile: StateModels.MemberProfile, state: StateModels.SessionState) => {
+    let session = { id, profile, ...profile, state, ...state} as StateModels.Session 
+    sessions.value[session.id] = session
+    let tempcheck = computed(() => sessions.value[session.id].state.is_connected)
+    console.log(sessions.value[session.id])
+    console.log(tempcheck)
+    console.log(watchingUsers.value)
+    setTimeout(() => {
+    if (id in sessions.value && !tempcheck.value) {
+      delete sessions.value[id];
+    }
+  }, 3000); // Adjust the delay (in milliseconds) if needed.
+});
+
+props.neko.events.on('session.deleted', (id: string) => {
+  if (id in sessions.value) {
+    const { [id]: deletedSession, ...rest } = sessions.value
+    sessions.value = rest
+  }
+})
+
+props.neko.events.on('session.updated', (id: string, state: StateModels.SessionState) => {
+  if (id in sessions.value) {
+    sessions.value = {
+      ...sessions.value,
+      [id]: { ...sessions.value[id], state: { ...sessions.value[id].state, ...state } },
+    }
+  }
+  console.log(sessions.value[id])
+  console.log(watchingUsers.value)
+})
+
+
+props.neko.events.on('session.profile', (id: string, profile: StateModels.MemberProfile) => {
+  if (id in sessions.value) {
+    sessions.value = {
+      ...sessions.value,
+      [id]: { ...sessions.value[id], profile: { ...sessions.value[id].profile, ...profile } },
+    }
+  }
 })
 </script>

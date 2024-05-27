@@ -5,6 +5,7 @@
         <NekoHeader :neko="neko" @toggle="expanded = !expanded" />
       </div>
       <div class="video-container">
+        <NekoConnect v-if="neko && neko!.state.connection.status == 'disconnected'" :neko="neko" />
         <NekoCanvas ref="neko" :server="server" autologin autoconnect autoplay />
         <div v-if="loaded && neko!.private_mode_enabled" class="player-notif">Private mode is currently enabled.</div>
         <div
@@ -47,57 +48,57 @@
           v-if="loaded && isTouchDevice"
           @click="neko!.mobileKeyboardToggle"
           style="position: absolute; left: 5px; transform: translateY(-100%)"
-        >
+          >
           <i class="fa fa-keyboard" />
         </button>
-        <span v-if="loaded && neko!.state.session_id" style="padding-top: 10px">
+        <!-- <span v-if="loaded && neko!.state.session_id" style="padding-top: 10px">
           You are logged in as
           <strong style="font-weight: bold">
             {{ neko!.state.sessions[neko!.state.session_id].profile.name }}
           </strong>
-        </span>
+        </span> -->
 
         <div class="room-menu">
-          <div class="left-menu">
-            <button @click="toggleCursor">
-              <i v-if="usesCursor" class="fas fa-mouse-pointer" />
-              <i v-else class="fas fa-location-arrow" />
-            </button>
-          </div>
-          <div class="controls">
-            <template v-if="loaded && neko">
-              <NekoConnect v-if="neko!.state.connection.status == 'disconnected'" :neko="neko" />
-              <NekoControls v-else :neko="neko" />
-            </template>
-          </div>
-          <div class="right-menu">
-            <div style="text-align: right" v-if="loaded">
-              <button v-if="neko!.state.connection.status != 'disconnected'" @click="neko!.disconnect()">
-                disconnect
-              </button>
+          <div class="controls-container">
+            <div class="left-menu">
+              <i
+                @click.left="cursorEnabled = !cursorEnabled"
+                :class="{'fas fa-solid fa-computer-mouse': true, 'active-cursor': cursorEnabled }" 
+                v-b-tooltip.hover title="Toggle Native Mouse"
+              /> 
+            </div>
+            <div class="controls">
+              <template v-if="loaded && neko">
+                <NekoControls :neko="neko" />
+              </template>
+            </div>
+            <div class="right-menu">
+              <div style="text-align: right" v-if="loaded">
+                <i class="fas fa-sign-out-alt" @click="neko!.logout()" v-if="neko!.state.connection.status != 'disconnected'" v-b-tooltip.hover title="Sign Out"/>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
     <aside class="neko-menu" v-if="expanded">
-      <div class="tabs-container">
+      <div class="tabs-container" v-if="neko">
         <ul>
-          <li :class="{ active: tab === 'events' }" @click.prevent="tab = 'events'">
-            <i class="fas fa-sliders-h" />
-            <span v-show="tab === 'events'">Events</span>
-          </li>
-          <li :class="{ active: tab === 'members' }" @click.prevent="tab = 'members'">
-            <i class="fas fa-users" />
-            <span v-show="tab === 'members'">Members</span>
-          </li>
-          <li :class="{ active: tab === 'media' }" @click.prevent="tab = 'media'">
-            <i class="fas fa-microphone" />
-            <span v-show="tab === 'media'">Media</span>
-          </li>
           <li :class="{ active: tab === 'chat' }" @click.prevent="tab = 'chat'">
             <i class="fas fa-comment-alt" />
             <span v-show="tab === 'chat'">Chat</span>
+          </li>
+          <li :class="{ active: tab === 'members' }" @click.prevent="tab = 'members'" v-if="neko.is_admin">
+            <i class="fas fa-users" />
+            <span v-show="tab === 'members'">Members</span>
+          </li>
+          <li :class="{ active: tab === 'events' }" @click.prevent="tab = 'events'" v-if="neko.is_admin">
+            <i class="fas fa-sliders-h" />
+            <span v-show="tab === 'events'">Settings</span>
+          </li>
+          <li :class="{ active: tab === 'media' }" @click.prevent="tab = 'media'" v-if="neko.is_admin">
+            <i class="fas fa-microphone" />
+            <span v-show="tab === 'media'">Media</span>
           </li>
 
           <!-- Plugins -->
@@ -105,11 +106,15 @@
         </ul>
       </div>
       <div class="page-container" v-if="neko">
-        <NekoEvents v-if="tab === 'events'" :neko="neko" />
-        <NekoMembers v-if="tab === 'members'" :neko="neko" />
-        <NekoMedia v-if="tab === 'media'" :neko="neko" />
-        <NekoChat v-show="tab === 'chat'" :neko="neko" />
-
+        // will now show user list of active watchers on each tab
+        <NekoMembers  v-if="neko && tab === 'chat'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
+        <NekoMembers  v-if="neko && tab === 'members'  && neko.is_admin" :neko="neko"/>
+        <NekoMembers  v-if="neko && tab === 'events'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
+        <NekoMembers  v-if="neko && tab === 'media'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
+        <NekoMembers  v-if="neko && tab === 'filetransfer'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
+        <NekoChat     :neko="neko" v-if="neko && tab === 'chat'"/>
+        <NekoEvents   v-if="neko && tab === 'events' && neko.is_admin" :neko="neko"/>
+        <NekoMedia    v-if="neko && tab === 'media' && neko.is_admin" :neko="neko"/>
         <!-- Plugins -->
         <component v-for="(el, key) in pluginsComponents" :key="key" :is="el" :tab="tab" :neko="neko" />
       </div>
@@ -176,7 +181,7 @@
   .neko-main {
     min-width: 360px;
     max-width: 100%;
-    flex-grow: 1;
+    flex: 1;
     flex-direction: column;
     display: flex;
     overflow: auto;
@@ -194,42 +199,63 @@
     }
 
     .room-container {
+      $offset: translateX(calc(100% - $side-width));
+      position: relative;
+       // right: $offset;
+      width: $offset;
+      // position: relative;
       background: $background-tertiary;
       height: $controls-height;
-      max-width: 100%;
+      max-width: $offset;
       flex-shrink: 0;
       flex-direction: column;
       display: flex;
       /* for mobile */
-      overflow-y: hidden;
+      overflow-y: scroll;
       overflow-x: auto;
 
       .room-menu {
-        max-width: 100%;
         flex: 1;
         display: flex;
+        justify-content: space-between; // Distribute items
 
-        .left-menu {
+        .controls-container {
+          position: relative;
           margin-left: 10px;
           flex: 1;
           justify-content: flex-start;
           align-items: center;
           display: flex;
-        }
+          max-width: calc(100% - neko-menu-width); // Adjust width to fit the menu
+          margin-right: neko-menu-width; // Adjust margin to fit the menu
+          overflow-x: scroll;
 
-        .controls {
-          flex: 1;
-          justify-content: center;
-          align-items: center;
-          display: flex;
-        }
+          .left-menu {
+            margin-left: 10px;
+            flex: 1;
+            justify-content: flex-start;
+            align-items: center;
+            width: fit-content;
+            max-width: fit-content;
+          }
 
-        .right-menu {
-          margin-right: 10px;
-          flex: 1;
-          justify-content: flex-end;
-          align-items: center;
-          display: flex;
+          .controls {
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding-left: 10%;
+            padding-right: 10%;
+          }
+
+          .right-menu {
+            margin-right: 10px;
+            flex: 1;
+            justify-content: flex-end;
+            align-items: center;
+            width: fit-content;
+            max-width: fit-content;
+          }
         }
       }
     }
@@ -278,17 +304,136 @@
         }
       }
     }
+    .fa-computer-mouse {
+          color: $style-primary;
+        }
+    .switch {
+        margin: 0 5px;
+        display: block;
+        position: relative;
+        width: 42px;
+        height: 24px;
+        input[type='checkbox'] {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        span {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: $background-secondary;
+          transition: 0.2s;
+          border-radius: 34px;
+          &:before {
+            color: $background-tertiary;
+            font-weight: 900;
+            font-family: 'Font Awesome 6 Free';
+            content: '\f3c1';
+            font-size: 8px;
+            line-height: 18px;
+            text-align: center;
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          }
+        }
+      }
+      input[type='checkbox'] {
+        &:checked + span {
+          background-color: $style-primary;
+          &:before {
+            content: '\f023';
+            transform: translateX(18px);
+          }
+        }
+        &:disabled + span {
+          &:before {
+            content: '';
+            background-color: rgba($color: $text-normal, $alpha: 0.4);
+          }
+        }
+    }
 
-    .page-container {
+    .page-container-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between; /* This spreads out the child elements */
+      height: 100%;
+    }
+
+    .scrollable-members {
+      flex-grow: 0;
+      flex-shrink: 0;
+      max-height: 75%;
+      overflow-y: auto;
+      padding: 5px;
+      box-sizing: border-box;
+      width: 100%; /* Ensure it takes full width */
+    }
+
+    .chat-container {
+      flex-grow: 0;
+      flex-shrink: 0;
+      padding: 5px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      width: 100%; /* Ensure it takes full width */
+    }
+    // .page-container {
+    //   // max-height: 100%;
+    //   // flex-grow: 1;
+    //   // display: flex;
+    //   // flex-direction: column;
+    //   // hyphens: auto;
+    //   // overflow-y: auto; 
+    //   // padding: 5px;
+    //   // box-sizing: border-box;
+    //   // border-bottom: 1px solid rgba(0, 0, 0, 0.41); /* Add this line */
+    //   .page-container .below-members { 
+    //     flex-grow: 0;
+    //     flex-shrink: 0;
+    //     padding: 5px;
+    //     overflow-y: auto;
+    //     box-sizing: border-box;
+    //     width: 100%; /* Ensure it takes full width */
+    //   }
+    // }
+  }
+  .page-container {
       max-height: 100%;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
-      overflow: auto;
+      hyphens: auto;
+      overflow-y: auto; 
       padding: 5px;
       box-sizing: border-box;
-    }
+      border-bottom: 1px solid rgba(0, 0, 0, 0.41); /* Add this line */
+      .below-members {
+        flex-grow: 0;
+        flex-shrink: 0;
+        padding: 5px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        width: 100%; /* Ensure it takes full width */
+      }
+      .show-border { 
+        border-bottom: 3px solid rgba(0, 0, 0, 0.3); 
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.3);
+      }
   }
+
 
   /* for mobile */
   @media only screen and (max-width: 600px) {
@@ -317,6 +462,29 @@
       }
     }
   }
+  .active-cursor {
+  color: $style-primary; 
+}
+
+.fa-computer-mouse {
+  cursor: pointer;
+}
+
+.fa-sign-out-alt {
+  cursor: pointer;
+}
+
+.room-menu {
+  // ... other styles
+
+  .left-menu,
+  .right-menu {
+    font-size: 1.8em; // Increase font size by 20%
+    margin: 0 15px;   // Adjust margin to move closer to center
+
+  }
+}
+
 </style>
 
 <script lang="ts" setup>
@@ -343,7 +511,7 @@ onMounted(async () => {
   }
 })
 
-import { ref, shallowRef, computed, onMounted } from 'vue'
+import { ref, shallowRef, computed, onMounted, watch } from 'vue'
 
 import type { AxiosProgressEvent } from 'axios'
 import NekoCanvas from '@/component/main.vue'
@@ -357,6 +525,8 @@ import NekoMedia from './components/media.vue'
 import NekoChat from './components/chat.vue'
 
 const neko = ref<typeof NekoCanvas>()
+const cursorEnabled = ref<boolean>(false) 
+const usesCursor = ref(false)
 
 const expanded = ref(!window.matchMedia('(max-width: 600px)').matches) // default to expanded on bigger screens
 const loaded = ref(false)
@@ -397,9 +567,23 @@ function dialogCancel() {
   neko.value!.room.uploadDialogClose()
 }
 
+// Watch for changes in cursorEnabled
+watch(cursorEnabled, (isEnabled) => {
+  if (isEnabled) {
+    enableCursor() 
+    console.log('cursor enabled')
+  } else {
+    // disableCursor() 
+    disableCursor() 
+    console.log('cursor disabled')
+  }
+});
+
+
+
 onMounted(() => {
   loaded.value = true
-  tab.value = 'events'
+  tab.value = 'chat'
   //@ts-ignore
   window.neko = neko
 
@@ -408,7 +592,7 @@ onMounted(() => {
   if (url) {
     server.value = url
   }
-
+  
   //
   // connection events
   //
@@ -532,8 +716,7 @@ onMounted(() => {
       y -= 4
 
       // draw arrow path
-      const arrowPath = new Path2D('M5 5L19 12.5L12.3286 14.465L8.29412 20L5 5Z')
-      ctx.globalAlpha = 0.5
+      const arrowPath = new Path2D('M5 5L26 16.5L15.9929 19.513L9.94118 28L5 5Z')
       ctx.translate(x, y)
       ctx.fillStyle = colorLight
       ctx.fill(arrowPath)

@@ -1,623 +1,563 @@
 <template>
-  <div class="tab-states">
-    <table class="states">
-      <tr>
-        <th style="width: 50%">authenticated</th>
-        <td :style="!neko.state.authenticated ? 'background: red;' : ''">{{ neko.state.authenticated }}</td>
-      </tr>
-      <tr>
-        <th>connection.url</th>
-        <td style="word-break: break-all">{{ neko.state.connection.url }}</td>
-      </tr>
-      <tr>
-        <th>connection.token</th>
-        <td>{{ neko.state.connection.token ? 'yes' : 'no' }}</td>
-      </tr>
-      <tr>
-        <th>connection.status</th>
-        <td
-          :style="
-            neko.state.connection.status == 'disconnected'
-              ? 'background: red;'
-              : neko.state.connection.status == 'connecting'
-                ? 'background: #17448a;'
-                : ''
-          "
+  <div class="container">
+    <div class="section">
+      <h2>Authenticated</h2>
+      <div class="space-between">
+        <span>{{ neko.state.authenticated }}</span>
+      </div>
+      <div class="space-between">
+        <strong>ID:</strong>
+        <span>{{ neko.state.session_id }}</span>
+      </div>
+      <div class="space-between">
+        <span>Total {{ Object.values(neko.state.sessions).length }} sessions.</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Connection</h2>
+      <div class="space-between">
+        <strong>URL:</strong>
+        <span>{{ neko.state.connection.url }}</span>
+      </div>
+      <div class="space-between">
+        <strong>Token:</strong>
+        <span>{{ neko.state.connection.token ? 'yes' : 'no' }}</span>
+      </div>
+      <div class="space-between">
+        <strong>Status:</strong>
+        <span>{{ neko.state.connection.status }}</span>
+      </div>
+      <div class="space-between">
+        <strong>Websocket Connected:</strong>
+        <span>{{ neko.state.connection.websocket.connected }}</span>
+      </div>
+      <details>
+        <summary>Websocket Config</summary>
+        <div class="space-between">
+          <strong>Max Reconnects:</strong>
+          <span>{{ neko.state.connection.websocket.config.max_reconnects }}</span>
+        </div>
+        <div class="space-between">
+          <strong>Timeout (ms):</strong>
+          <span>{{ neko.state.connection.websocket.config.timeout_ms }}</span>
+        </div>
+        <div class="space-between">
+          <strong>Backoff (ms):</strong>
+          <span>{{ neko.state.connection.websocket.config.backoff_ms }}</span>
+        </div>
+      </details>
+      <div class="space-between">
+        <strong>WebRTC Connected:</strong>
+        <span>{{ neko.state.connection.webrtc.connected }}</span>
+      </div>
+      <div class="space-between">
+        <strong>WebRTC Stable:</strong>
+        <span>{{ neko.state.connection.webrtc.stable }}</span>
+      </div>
+      <details>
+        <summary>WebRTC Config</summary>
+        <div class="space-between">
+          <strong>Max Reconnects:</strong>
+          <span>{{ neko.state.connection.webrtc.config.max_reconnects }}</span>
+        </div>
+        <div class="space-between">
+          <strong>Timeout (ms):</strong>
+          <span>{{ neko.state.connection.webrtc.config.timeout_ms }}</span>
+        </div>
+        <div class="space-between">
+          <strong>Backoff (ms):</strong>
+          <span>{{ neko.state.connection.webrtc.config.backoff_ms }}</span>
+        </div>
+      </details>
+    </div>
+
+    <div class="section">
+      <h2>Settings</h2>
+        <button @click="updateSettings({ private_mode: !neko.state.settings.private_mode })" class="toggle-button">
+          {{ neko.state.settings.private_mode ? 'Disable Private Mode' : 'Enable Private Mode' }}
+        </button>
+      <div class="space-between">
+        <button @click="updateSettings({ locked_logins: !neko.state.settings.locked_logins })" class="toggle-button">
+          {{ neko.state.settings.locked_logins ? 'Disable Locked Logins' : 'Enable Locked Logins' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="updateSettings({ locked_controls: !neko.state.settings.locked_controls })" class="toggle-button">
+          {{ neko.state.settings.locked_controls ? 'Disable Locked Controls' : 'Enable Locked Controls' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="updateSettings({ control_protection: !neko.state.settings.control_protection })" class="toggle-button">
+          {{ neko.state.settings.control_protection ? 'Disable Control Protection' : 'Enable Control Protection' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="updateSettings({ implicit_hosting: !neko.state.settings.implicit_hosting })" class="toggle-button">
+          {{ neko.state.settings.implicit_hosting ? 'Disable Implicit Hosting' : 'Enable Implicit Hosting' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="updateSettings({ inactive_cursors: !neko.state.settings.inactive_cursors })" class="toggle-button">
+          {{ neko.state.settings.inactive_cursors ? 'Disable Inactive Cursors' : 'Enable Inactive Cursors' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="updateSettings({ merciful_reconnect: !neko.state.settings.merciful_reconnect })" class="toggle-button">
+          {{ neko.state.settings.merciful_reconnect ? 'Disable Merciful Reconnect' : 'Enable Merciful Reconnect' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>WebRTC Video</h2>
+      <button @click="neko.setWebRTCAudio({ disabled: !neko.state.connection.webrtc.audio.disabled })" class="toggle-button">
+          {{ neko.state.connection.webrtc.audio.disabled ? 'Enable WebRTC Audio' : 'Disable WebRTC Audio' }}
+        </button>
+      <div class="space-between">
+        <button @click="neko.setWebRTCVideo({ disabled: !neko.state.connection.webrtc.video.disabled })" class="toggle-button">
+          {{ neko.state.connection.webrtc.video.disabled ? 'Enable Video' : 'Disable Video' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <button @click="neko.setWebRTCVideo({ auto: !neko.state.connection.webrtc.video.auto })" class="toggle-button">
+          {{ neko.state.connection.webrtc.video.auto ? 'Disable Auto Video' : 'Enable Auto Video' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <strong>Bitrate:</strong>
+        <span>{{ Math.floor(neko.state.connection.webrtc.stats.bitrate / 1024 / 8) }} KB/s</span>
+      </div>
+      <div class="space-between">
+        <strong>Latency:</strong>
+        <span>{{ neko.state.connection.webrtc.stats.latency }}ms</span>
+      </div>
+      <div class="space-between">
+        <strong>Packet Loss:</strong>
+        <span>{{ Math.floor(neko.state.connection.webrtc.stats.packetLoss) }}%</span>
+      </div>
+      <div></div>
+      <div class="space-between">
+        <strong>Codec:</strong>
+        <select
+          :value="neko.state.connection.webrtc.video.id"
+          @input="neko.setWebRTCVideo({ selector: { id: ($event.target as HTMLSelectElement).value || '' } })"
         >
-          {{ neko.state.connection.status }}
-        </td>
-      </tr>
-      <tr>
-        <th title="connection.websocket.connected">connection.websocket.con...</th>
-        <td>{{ neko.state.connection.websocket.connected }}</td>
-      </tr>
-      <tr>
-        <th>connection.websocket.config</th>
-        <td>
-          <details>
-            <summary>Show</summary>
-            <table class="states">
-              <tr>
-                <th style="width: 40%">max_reconnects</th>
-                <td>
-                  {{ neko.state.connection.websocket.config.max_reconnects }}
-                </td>
-              </tr>
-              <tr>
-                <th style="width: 40%">timeout_ms</th>
-                <td>
-                  {{ neko.state.connection.websocket.config.timeout_ms }}
-                </td>
-              </tr>
-              <tr>
-                <th style="width: 40%">backoff_ms</th>
-                <td>
-                  {{ neko.state.connection.websocket.config.backoff_ms }}
-                </td>
-              </tr>
-            </table>
-          </details>
-        </td>
-      </tr>
-      <tr>
-        <th title="connection.webrtc.connected">connection.webrtc.connect...</th>
-        <td>{{ neko.state.connection.webrtc.connected }}</td>
-      </tr>
-      <tr>
-        <th>connection.webrtc.stable</th>
-        <td>{{ neko.state.connection.webrtc.stable }}</td>
-      </tr>
-      <tr>
-        <th>connection.webrtc.config</th>
-        <td>
-          <details>
-            <summary>Show</summary>
-            <table class="states">
-              <tr>
-                <th style="width: 40%">max_reconnects</th>
-                <td>
-                  {{ neko.state.connection.webrtc.config.max_reconnects }}
-                </td>
-              </tr>
-              <tr>
-                <th style="width: 40%">timeout_ms</th>
-                <td>
-                  {{ neko.state.connection.webrtc.config.timeout_ms }}
-                </td>
-              </tr>
-              <tr>
-                <th style="width: 40%">backoff_ms</th>
-                <td>
-                  {{ neko.state.connection.webrtc.config.backoff_ms }}
-                </td>
-              </tr>
-            </table>
-          </details>
-        </td>
-      </tr>
-      <tr>
-        <th>connection.webrtc.stats</th>
-        <td>
-          <table class="states" v-if="neko.state.connection.webrtc.stats != null">
-            <tr>
-              <th style="width: 40%">muted</th>
-              <td :style="neko.state.connection.webrtc.stats.muted ? 'background: red' : ''">
-                {{ neko.state.connection.webrtc.stats.muted }}
-              </td>
-            </tr>
-            <tr>
-              <th style="width: 40%">bitrate</th>
-              <td>{{ Math.floor(neko.state.connection.webrtc.stats.bitrate / 1024 / 8) }} KB/s</td>
-            </tr>
-            <tr>
-              <th style="width: 40%">latency</th>
-              <td
-                :title="
-                  'request: ' +
-                  neko.state.connection.webrtc.stats.requestLatency +
-                  'ms, response: ' +
-                  neko.state.connection.webrtc.stats.responseLatency +
-                  'ms'
-                "
-              >
-                {{ neko.state.connection.webrtc.stats.latency }}ms
-              </td>
-            </tr>
-            <tr>
-              <th>loss</th>
-              <td :style="neko.state.connection.webrtc.stats.packetLoss >= 1 ? 'background: red' : ''">
-                {{ Math.floor(neko.state.connection.webrtc.stats.packetLoss) }}%
-              </td>
-            </tr>
-            <tr>
-              <td
-                colspan="2"
-                style="background: green; text-align: center"
-                v-if="neko.state.connection.webrtc.stats.paused"
-              >
-                webrtc is paused
-              </td>
-              <td
-                colspan="2"
-                style="background: darkviolet; text-align: center"
-                v-else-if="neko.state.connection.webrtc.video.disabled"
-              >
-                video is disabled
-              </td>
-              <td
-                colspan="2"
-                style="background: red; text-align: center"
-                v-else-if="!neko.state.connection.webrtc.stats.fps"
-              >
-                frame rate is zero
-              </td>
-              <td colspan="2" v-else>
-                {{
-                  neko.state.connection.webrtc.stats.width +
-                  'x' +
-                  neko.state.connection.webrtc.stats.height +
-                  '@' +
-                  Math.floor(neko.state.connection.webrtc.stats.fps * 100) / 100
-                }}
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <th title="connection.webrtc.video.disabled">connection.webrtc.video.disab..</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.connection.webrtc.video.disabled }}</span>
-            <button @click="neko.setWebRTCVideo({ disabled: !neko.state.connection.webrtc.video.disabled })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th>connection.webrtc.video.id</th>
-        <td>{{ neko.state.connection.webrtc.video.id }}</td>
-      </tr>
-      <tr>
-        <th>connection.webrtc.video.auto</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.connection.webrtc.video.auto }}</span>
-            <button @click="neko.setWebRTCVideo({ auto: !neko.state.connection.webrtc.video.auto })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th title="connection.webrtc.audio.disabled">connection.webrtc.audio.disab..</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.connection.webrtc.audio.disabled }}</span>
-            <button @click="neko.setWebRTCAudio({ disabled: !neko.state.connection.webrtc.audio.disabled })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th rowspan="2">connection.webrtc.videos</th>
-        <td>Total {{ neko.state.connection.webrtc.videos.length }} videos.</td>
-      </tr>
-      <tr>
-        <td>
-          <select
-            :value="neko.state.connection.webrtc.video.id"
-            @input="neko.setWebRTCVideo({ selector: { id: ($event.target as HTMLSelectElement)!.value || '' } })"
+          <option v-for="video in neko.state.connection.webrtc.videos" :key="video" :value="video">
+            {{ video }}
+          </option>
+        </select>
+      </div>
+      <div>Total {{ neko.state.connection.webrtc.videos.length }} videos.</div>
+    </div>
+
+    <div class="section">
+      <h2>Connection Type</h2>
+      <div class="space-between">
+        <span>{{ neko.state.connection.type }}</span>
+      </div>
+      <h2>Screencast</h2>
+      <div class="space-between">
+        <span>{{ neko.state.connection.screencast }}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Video</h2>
+      <div class="space-between">
+        <strong>Playable:</strong>
+        <span>{{ neko.state.video.playable }}</span>
+      </div>
+      <div class="space-between">
+        <button @click="neko.state.video.playing ? neko.pause() : neko.play()" class="toggle-button">
+          {{ neko.state.video.playing ? 'Pause' : 'Play' }}
+        </button>
+      </div>
+      <div>
+        <strong>Volume:</strong>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          :value="neko.state.video.volume"
+          @input="neko.setVolume(Number(($event.target as HTMLInputElement).value))"
+          step="0.01"
+        />
+      </div>
+      <div class="space-between">
+        <button @click="neko.state.video.muted ? neko.unmute() : neko.mute()" class="toggle-button">
+          {{ neko.state.video.muted ? 'Unmute' : 'Mute' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Control</h2>
+      <h3>Scroll</h3>
+      <div class="space-between">
+        <button @click="neko.setScrollInverse(!neko.state.control.scroll.inverse)" class="toggle-button">
+          {{ neko.state.control.scroll.inverse ? 'Disable Inverse Scroll' : 'Enable Inverse Scroll' }}
+        </button>
+      </div>
+      <div>
+        <strong>Sensitivity:</strong>
+        <input
+          type="range"
+          min="-5"
+          max="5"
+          :value="neko.state.control.scroll.sensitivity"
+          @input="neko.setScrollSensitivity(Number(($event.target as HTMLInputElement).value))"
+          step="1"
+        />
+      </div>
+
+      <h3>Clipboard</h3>
+      <textarea
+        :readonly="!neko.controlling"
+        :value="neko.state.control.clipboard ? neko.state.control.clipboard.text : ''"
+        @input="clipboardText = ($event.target as HTMLTextAreaElement).value"
+      ></textarea>
+      <button :disabled="!neko.controlling" @click="neko.room.clipboardSetText({ text: clipboardText })">
+        Send Clipboard
+      </button>
+
+      <h3>Keyboard</h3>
+      <div class="space-between">
+        <span>{{ neko.state.control.keyboard.layout + (neko.state.control.keyboard.variant ? ' (' + neko.state.control.keyboard.variant + ')' : '') }}</span>
+      </div>
+      <input
+        type="text"
+        placeholder="Layout"
+        :value="neko.state.control.keyboard.layout"
+        @input="neko.setKeyboard(($event.target as HTMLInputElement).value, neko.state.control.keyboard.variant)"
+      />
+      <input
+        type="text"
+        placeholder="Variant"
+        :value="neko.state.control.keyboard.variant"
+        @input="neko.setKeyboard(neko.state.control.keyboard.layout, ($event.target as HTMLInputElement).value)"
+      />
+
+      <h3>Touch</h3>
+      <div class="space-between">
+        <button @click="neko.setTouchEnabled(!neko.state.control.touch.enabled)" class="toggle-button">
+          {{ neko.state.control.touch.enabled ? 'Disable Touch' : 'Enable Touch' }}
+        </button>
+      </div>
+      <div class="space-between">
+        <strong>Supported:</strong>
+        <span>{{ neko.state.control.touch.supported }}</span>
+      </div>
+
+      <h3>Host</h3>
+      <div class="space-between">
+        <strong>ID:</strong>
+        <span>{{ neko.state.control.host_id }}</span>
+      </div>
+      <div>
+        <button @click="neko.controlling ? neko.room.controlRelease() : neko.room.controlRequest()" class="toggle-button">
+          {{ neko.controlling ? 'Release Control' : 'Request Control' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Screen</h2>
+      <div class="space-between">
+        <strong>Size:</strong>
+        <span>{{ neko.state.screen.size.width }}x{{ neko.state.screen.size.height }}@{{ neko.state.screen.size.rate }}</span>
+      </div>
+
+      <div v-if="neko.is_admin">
+        <h3>Configurations</h3>
+        <div>Total {{ neko.state.screen.configurations.length }} configurations.</div>
+        <select id="screen-configuration" v-model="screenConfiguration">
+          <option
+            v-for="{ width, height, rate } in neko.state.screen.configurations"
+            :key="String(width) + 'x' + String(height) + '@' + String(rate)"
+            :value="String(width) + 'x' + String(height) + '@' + String(rate)"
           >
-            <option v-for="video in neko.state.connection.webrtc.videos" :key="video" :value="video">
-              {{ video }}
-            </option>
-          </select>
-        </td>
-      </tr>
-      <tr>
-        <th>connection.screencast</th>
-        <td>{{ neko.state.connection.screencast }}</td>
-      </tr>
-      <tr>
-        <th>connection.type</th>
-        <td :style="neko.state.connection.type == 'fallback' ? 'background: #17448a;' : ''">
-          {{ neko.state.connection.type }}
-        </td>
-      </tr>
-      <tr>
-        <th>video.playable</th>
-        <td>{{ neko.state.video.playable }}</td>
-      </tr>
-      <tr>
-        <th rowspan="2">video.playing</th>
-        <td>{{ neko.state.video.playing }}</td>
-      </tr>
-      <tr>
-        <td>
-          <button v-if="!neko.state.video.playing" @click="neko.play()">play</button>
-          <button v-else @click="neko.pause()">pause</button>
-        </td>
-      </tr>
-      <tr>
-        <th rowspan="2">video.volume</th>
-        <td>{{ neko.state.video.volume }}</td>
-      </tr>
-      <tr>
-        <td>
+            {{ String(width) + 'x' + String(height) + '@' + String(rate) }}
+          </option>
+        </select>
+        <button class="small-buttons" @click="setScreenConfiguration">Set Configuration</button>
+
+        <h3></h3>
+        <div class="space-between">
+          <button @click="neko.state.screen.sync.enabled = !neko.state.screen.sync.enabled" class="toggle-button">
+            {{ neko.state.screen.sync.enabled ? 'Disable Screen Sync' : 'Enable Screen Sync' }}
+          </button>
+        </div>
+        <div>
+          <strong>Multiplier:</strong>
           <input
             type="range"
             min="0"
-            max="1"
-            :value="neko.state.video.volume"
-            @input="neko.setVolume(Number(($event.target as HTMLInputElement)!.value))"
-            step="0.01"
+            max="10"
+            :value="neko.state.screen.sync.multiplier"
+            @input="neko.state.screen.sync.multiplier = Number(($event.target as HTMLInputElement).value)"
+            step="0.1"
           />
-        </td>
-      </tr>
-      <tr>
-        <th rowspan="2">video.muted</th>
-        <td>{{ neko.state.video.muted }}</td>
-      </tr>
-      <tr>
-        <td>
-          <button v-if="!neko.state.video.muted" @click="neko.mute()">mute</button>
-          <button v-else @click="neko.unmute()">unmute</button>
-        </td>
-      </tr>
-      <tr>
-        <th>control.scroll.inverse</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.control.scroll.inverse }}</span>
-            <button @click="neko.setScrollInverse(!neko.state.control.scroll.inverse)">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th rowspan="2">control.scroll.sensitivity</th>
-        <td>{{ neko.state.control.scroll.sensitivity }}</td>
-      </tr>
-      <tr>
-        <td>
+        </div>
+        <div>
+          <strong>Rate:</strong>
           <input
             type="range"
-            min="-5"
-            max="5"
-            :value="neko.state.control.scroll.sensitivity"
-            @input="neko.setScrollSensitivity(Number(($event.target as HTMLInputElement)!.value))"
-            step="1"
+            min="5"
+            max="60"
+            :value="neko.state.screen.sync.rate"
+            @input="neko.state.screen.sync.rate = Number(($event.target as HTMLInputElement).value)"
+            step="5"
           />
-        </td>
-      </tr>
-      <tr>
-        <th>control.clipboard</th>
-        <td>
-          <textarea
-            :readonly="!neko.controlling"
-            :value="neko.state.control.clipboard ? neko.state.control.clipboard.text : ''"
-            @input="clipboardText = ($event.target as HTMLTextAreaElement)!.value"
-          ></textarea>
-          <button :disabled="!neko.controlling" @click="neko.room.clipboardSetText({ text: clipboardText })">
-            send clipboard
-          </button>
-        </td>
-      </tr>
-      <tr>
-        <th rowspan="2">control.keyboard</th>
-        <td>
-          {{
-            neko.state.control.keyboard.layout +
-            (neko.state.control.keyboard.variant ? ' (' + neko.state.control.keyboard.variant + ')' : '')
-          }}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <input
-            type="text"
-            placeholder="Layout"
-            :value="neko.state.control.keyboard.layout"
-            @input="neko.setKeyboard(($event.target as HTMLInputElement)!.value, neko.state.control.keyboard.variant)"
-            style="width: 50%; box-sizing: border-box"
-          />
-          <input
-            type="text"
-            placeholder="Variant"
-            :value="neko.state.control.keyboard.variant"
-            @input="neko.setKeyboard(neko.state.control.keyboard.layout, ($event.target as HTMLInputElement)!.value)"
-            style="width: 50%; box-sizing: border-box"
-          />
-        </td>
-      </tr>
-      <tr>
-        <th>control.touch.enabled</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.control.touch.enabled }}</span>
-            <button @click="neko.setTouchEnabled(!neko.state.control.touch.enabled)">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th>control.touch.supported</th>
-        <td>{{ neko.state.control.touch.supported }}</td>
-      </tr>
-      <tr>
-        <th rowspan="2">control.host_id</th>
-        <td>{{ neko.state.control.host_id }}</td>
-      </tr>
-      <tr>
-        <td>
-          <button v-if="!neko.controlling" @click="neko.room.controlRequest()">request control</button>
-          <button v-else @click="neko.room.controlRelease()">release control</button>
-        </td>
-      </tr>
-      <tr>
-        <th>screen.size</th>
-        <td>
-          {{ neko.state.screen.size.width }}x{{ neko.state.screen.size.height }}@{{ neko.state.screen.size.rate }}
-        </td>
-      </tr>
-      <template v-if="neko.is_admin">
-        <tr>
-          <th rowspan="2">screen.configurations</th>
-          <td>Total {{ neko.state.screen.configurations.length }} configurations.</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-              list="screen-configuration"
-              v-model="screenConfiguration"
-              style="width: 100%; box-sizing: border-box"
-            />
-            <datalist id="screen-configuration">
-              <option
-                v-for="{ width, height, rate } in neko.state.screen.configurations"
-                :key="String(width) + 'x' + String(height) + '@' + String(rate)"
-                :value="String(width) + 'x' + String(height) + '@' + String(rate)"
-              />
-            </datalist>
-            <button @click="setScreenConfiguration">set</button>
-          </td>
-        </tr>
-        <tr>
-          <th class="middle">screen.sync.enabled</th>
-          <td>
-            <div class="space-between">
-              <span>{{ neko.state.screen.sync.enabled }}</span>
-              <button @click="neko.state.screen.sync.enabled = !neko.state.screen.sync.enabled">
-                <i class="fas fa-toggle-on"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <th rowspan="2">screen.sync.multiplier</th>
-          <td>{{ neko.state.screen.sync.multiplier || 'use device pixel ratio' }}</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              :value="neko.state.screen.sync.multiplier"
-              @input="neko.state.screen.sync.multiplier = Number(($event.target as HTMLInputElement)!.value)"
-              step="0.1"
-            />
-          </td>
-        </tr>
-        <tr>
-          <th rowspan="2">screen.sync.rate</th>
-          <td>{{ neko.state.screen.sync.rate }}</td>
-        </tr>
-        <tr>
-          <td>
-            <input
-              type="range"
-              min="5"
-              max="60"
-              :value="neko.state.screen.sync.rate"
-              @input="neko.state.screen.sync.rate = Number(($event.target as HTMLInputElement)!.value)"
-              step="5"
-            />
-          </td>
-        </tr>
-      </template>
-      <template v-else>
-        <tr>
-          <th>screen.configurations</th>
-          <td rowspan="2" style="vertical-align: middle">Session is not admin.</td>
-        </tr>
-        <tr>
-          <th>screen.sync</th>
-        </tr>
-      </template>
-      <tr>
-        <th>session_id</th>
-        <td>{{ neko.state.session_id }}</td>
-      </tr>
-      <tr>
-        <th>sessions</th>
-        <td>Total {{ Object.values(neko.state.sessions).length }} sessions.</td>
-      </tr>
+        </div>
+      </div>
 
-      <tr>
-        <th class="middle">settings.private_mode</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.private_mode }}</span>
-            <button @click="updateSettings({ private_mode: !neko.state.settings.private_mode })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.locked_logins</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.locked_logins }}</span>
-            <button @click="updateSettings({ locked_logins: !neko.state.settings.locked_logins })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.locked_controls</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.locked_controls }}</span>
-            <button @click="updateSettings({ locked_controls: !neko.state.settings.locked_controls })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.control_protection</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.control_protection }}</span>
-            <button @click="updateSettings({ control_protection: !neko.state.settings.control_protection })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.implicit_hosting</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.implicit_hosting }}</span>
-            <button @click="updateSettings({ implicit_hosting: !neko.state.settings.implicit_hosting })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.inactive_cursors</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.inactive_cursors }}</span>
-            <button @click="updateSettings({ inactive_cursors: !neko.state.settings.inactive_cursors })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th class="middle">settings.merciful_reconnect</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.settings.merciful_reconnect }}</span>
-            <button @click="updateSettings({ merciful_reconnect: !neko.state.settings.merciful_reconnect })">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
+      <div v-else class="space-between">
+        <span>Session is not admin.</span>
+      </div>
+    </div>
 
-      <tr>
-        <th>cursors</th>
-        <td>{{ neko.state.cursors }}</td>
-      </tr>
 
-      <tr>
-        <th>mobile_keyboard_open</th>
-        <td>
-          <div class="space-between">
-            <span>{{ neko.state.mobile_keyboard_open }}</span>
-            <button @click="neko.mobileKeyboardToggle">
-              <i class="fas fa-toggle-on"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
+    <div class="section">
+      <h2>Cursors</h2>
+      <div class="space-between">
+        <span>{{ neko.state.cursors }}</span>
+      </div>
+    </div>
 
-      <tr>
-        <th>control actions</th>
-        <td>
-          <button title="cut" @click="neko.control.cut()"><i class="fas fa-cut" /></button>
-          <button title="copy" @click="neko.control.copy()"><i class="fas fa-copy" /></button>
-          <button title="paste" @click="neko.control.paste()"><i class="fas fa-paste" /></button>
-          <button title="select all" @click="neko.control.selectAll()"><i class="fas fa-i-cursor" /></button>
-        </td>
-      </tr>
-      <tr>
-        <th>control keypress</th>
-        <td style="text-align: center">
-          <button style="width: 20px" v-for="l in letters" :key="l" @click="neko.control.keyPress(l)">
-            {{ String.fromCharCode(l) }}
-          </button>
-          <div style="display: flex">
-            <button title="shift" @click="shift = !shift">
-              <i v-if="shift" class="fas fa-caret-square-up" />
-              <i v-else class="far fa-caret-square-up" />
-            </button>
-            <button style="width: 100%" @click="neko.control.keyPress(' '.charCodeAt(0))">space</button>
-            <button title="shift" @click="shift = !shift">
-              <i v-if="shift" class="fas fa-caret-square-up" />
-              <i v-else class="far fa-caret-square-up" />
-            </button>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <th>chaos monkey</th>
-        <td>
-          <button @click="cursorMovingToggle">cursor moving</button>
-          <button @click="screenChangingToggle">screen cfg changing</button>
-        </td>
-      </tr>
-      <tr>
-        <th>click on color</th>
-        <td>
-          <NekoColor @colorChange="neko.control.buttonPress(1, $event)" />
-        </td>
-      </tr>
-    </table>
+    <div class="section">
+      <h2>Mobile Keyboard Open</h2>
+        <button @click="neko.mobileKeyboardToggle" class="toggle-button">
+          {{ neko.state.mobile_keyboard_open ? 'Close Keyboard' : 'Open Keyboard' }}
+        </button>
+    </div>
+
+    <div class="section">
+      <h2>Control Actions</h2>
+      <button class="control-buttons" title="cut" @click="neko.control.cut()"><i class="fas fa-cut control-buttons" /></button>
+      <button class="control-buttons" title="copy" @click="neko.control.copy()"><i class="fas fa-copy control-buttons" /></button>
+      <button class="control-buttons" title="paste" @click="neko.control.paste()">
+        <i class="fas fa-paste control-buttons" />
+      </button>
+      <button class="control-buttons" title="select all" @click="neko.control.selectAll()">
+        <i class="fas fa-i-cursor control-buttons" />
+      </button>
+    </div>
+
+    <div class="section">
+      <h2>Control Keypress</h2>
+      <button v-for="l in letters" :key="l" @click="neko.control.keyPress(l)" class="small-buttons">
+        {{ String.fromCharCode(l) }}
+      </button>
+      <div>
+      <div></div>
+      <button title="shift" @click="shift = !shift" class="small-buttons">
+        <i v-if="shift" class="fas fa-caret-square-up small-buttons" />
+        <i v-else class="far fa-caret-square-up small-buttons" />
+      </button>
+      <button @click="neko.control.keyPress(' '.charCodeAt(0))" class="small-buttons">
+        space
+      </button>
+    </div>
+    </div>  
+    
+
+    <div class="section">
+      <h2>Chaos Monkey</h2>
+      <button @click="cursorMovingToggle">cursor moving</button>
+      <button @click="screenChangingToggle">screen cfg changing</button>
+    </div>
+    <div class="section">
+    <h2>Color Picker</h2>
+    <NekoColor @colorChange="neko.control.buttonPress(1, $event)" class="left-box"/>
+    </div>
   </div>
 </template>
 
 <style lang="scss">
-  .tab-states {
-    &,
-    .states {
-      width: 100%;
-    }
+@import '@/page/assets/styles/main.scss';
+$section-border: 1px solid #ccc;
+$section-padding: 10px;
+$section-radius: 5px;
+.left-box {
+  width: 75%;
+  margin-left: 0;
+  margin-right: 0;
+}
+.toggle-button {
+  width: 75%;
+  margin-left: 12.5%;
+  font-size: 0.8em;
+  margin-top: 5px;
+  align-self: center;
+  justify-self: center; 
+}
+.small-buttons {
+  width: fit-content;
+  font-size: 1.2em;
+  margin: 0px;
+}
+.control-buttons {
+  width: fit-content;
+  margin-left: 12.5%;
+  font-size: 1em;
+  align-self: center;
+  justify-self: center; 
+}
+button {
+  color: white;
+margin-top: 5px;
+width: 75%;
+margin-left: 12.5%;
+align-self: center;
+justify-self: center; 
+border: 0.5px solid white;
+background-color: #9d9d9d;
+accent-color: $style-primary;
+cursor: pointer;
 
-    td,
-    th {
-      border: 1px solid #ccc;
-      padding: 4px;
-    }
+&:hover {
+  color: black;
+  background-color: #ffffff;
+}
 
-    th {
-      text-align: left;
-    }
+&.toggle-button {
+  width: 75%;
+  font-size: 0.8em;
+  margin-top: 5px;
+  margin-left: 12.5%;
+  align-self: center;
+  justify-self: center; 
+}
+&.small-buttons {
+  font-size: 0.8emem;
+  // padding: 5px;
+  width: fit-content;
+  // margin: 5px;
+}
+&.control-buttons {
+  font-size: 1em;
+  margin-left: 12.5%;
+  width: fit-content;
+  align-self: center;
+  justify-self: center; 
+}
+}
+.container {
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+  box-sizing: border-box;
+  align-items: center;
 
-    .middle {
-      vertical-align: middle;
+  .section {
+    border: $section-border;
+    padding: $section-padding;
+    border-radius: $section-radius;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h2 {
+      margin-top: 0;
+      text-align: center; 
+      align-self: center;
     }
 
     .space-between {
-      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      // width: 100%;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+    button {
+      color: white;
+      margin-top: 5px;
+      width: 75%;
+      margin-left: 12.5%;
+      align-self: center;
+      justify-self: center; 
+      border: 0.5px solid white;
+      background-color: #242424;
+      accent-color: $style-primary;
+      cursor: pointer;
+
+      &:hover {
+        color: black;
+        background-color: #ddd;
+      }
+
+      &.toggle-button {
+        width: 75%;
+        font-size: 0.8em;
+        margin-top: 5px;
+        margin-left: 12.5%;
+        align-self: center;
+        justify-self: center; 
+      }
+      &.small-buttons {
+        font-size: 0.8emem;
+        margin: 0px;
+        // padding: 5px;
+        width: fit-content;
+        // margin: 5px;
+      }
+    }
+
+    input[type='range'] {
+      accent-color: $style-primary;
+      width: 100%;
+      background-color: #242424;
+      ::-webkit-slider-runnable-track {
+        background: #242424;
+        border: 0.2px solid white;
+        border-radius: 1.3px;
+        width: 100%;
+        height: 1.3px;
+      }
+      ::-moz-range-track {
+        background: #242424;
+        border: 0.2px solid white;
+        border-radius: 1.3px;
+        width: 100%;
+        height: 1.3px;
+      }
+    }
+    
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      resize: vertical;
+      background-color: #242424;
+      color: white;
+    }
+
+    /* Center buttons within sections */
+    h2 + .space-between {
+      display: flex;
+      justify-content: center; 
+      flex-wrap: wrap;       
+      gap: 10px;           
+
+      button {
+        flex: 1 0 auto;   
+        min-width: 60px; 
+        width: 50%;
+      }
+
     }
   }
+}
 </style>
+
 
 <script lang="ts" setup>
 import { ref, watch, computed } from 'vue'

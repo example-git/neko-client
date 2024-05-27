@@ -12,6 +12,7 @@ export default interface State {
   settings: Settings
   cursors: Cursors
   mobile_keyboard_open: boolean
+  watchingSessions: any, 
 }
 
 /////////////////////////////
