@@ -7,6 +7,7 @@ import { Logger } from '../utils/logger'
 import type { NekoConnection } from './connection'
 import type NekoState from '../types/state'
 import type { Settings } from '../types/state'
+import { computed } from 'vue'
 
 export interface NekoEvents {
   // connection events
@@ -46,6 +47,18 @@ export interface NekoEvents {
   // external message events
   ['message']: (event: string, payload: any) => void
 }
+export const watchingSessions: Record<string, message.SessionData> = {}
+
+function is_watching(session: message.SessionData) {
+  if (session.id !in watchingSessions && session.is_connected || session.is_watching) {
+    watchingSessions[session.id] = session
+  }
+  else if (session.id in watchingSessions && !session.is_connected && !session.is_watching) {
+    delete watchingSessions[session.id]
+  }
+}
+
+
 
 export class NekoMessages extends EventEmitter<NekoEvents> {
   private _localLog: Logger
@@ -111,7 +124,7 @@ export class NekoMessages extends EventEmitter<NekoEvents> {
     this._state.control.touch.supported = conf.touch_events // TODO: Vue.Set
     this._state.connection.screencast = conf.screencast_enabled // TODO: Vue.Set
     this._state.connection.webrtc.videos = conf.webrtc.videos // TODO: Vue.Set
-
+  
     for (const id in conf.sessions) {
       this[EVENT.SESSION_CREATED](conf.sessions[id])
     }
@@ -234,7 +247,7 @@ export class NekoMessages extends EventEmitter<NekoEvents> {
     this._localLog.debug(`EVENT.SESSION_DELETED`, { id })
     delete this._state.sessions[id] // TODO: Vue.Delete
     this.emit('session.deleted', id)
-  }
+  }  
 
   protected [EVENT.SESSION_PROFILE]({ id, ...profile }: message.MemberProfile) {
     if (id in this._state.sessions) {
@@ -338,7 +351,7 @@ export class NekoMessages extends EventEmitter<NekoEvents> {
   protected [EVENT.SEND_BROADCAST]({ sender, subject, body }: message.SendMessage) {
     this._localLog.debug(`EVENT.BORADCAST_STATUS`)
     this.emit('receive.broadcast', sender, subject, body)
-  }
+}
 
   /////////////////////////////
   // FileChooserDialog Events

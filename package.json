@@ -22,6 +22,10 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
+    "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
     "eventemitter3": "^5.0.1",
     "resize-observer-polyfill": "^1.5.1",
