@@ -3,14 +3,14 @@
     <div class="clear-button" @click="clearChat">
       <i class="fas fa-rotate" v-b-tooltip.hover title="Clear Chat"
       :class="{ 'fa-spin': isHovering }"
-      @mouseover="isHovering = true" 
-      @mouseout="isHovering = false"></i> 
+      @mouseover="isHovering = true"
+      @mouseout="isHovering = false"></i>
     </div>
     <ul class="chat-history" ref="history">
-      <li 
-        v-for="(message, index) in messagesWithColors" 
+      <li
+        v-for="(message, index) in messagesWithColors"
         :key="index"
-        class="message" 
+        class="message"
         :class="{ alternate: index % 2 === 1, lastMessage: index === messagesWithColors.length - 1 }"
       >
         <div class="user-pfp">
@@ -28,16 +28,16 @@
     </ul>
     <div class="chat-send">
       <div class="text-container">
-        <textarea 
-          ref="input" 
-          placeholder="Send a message" 
-          @keydown="onKeyDown" 
-          v-model="content" 
+        <textarea
+          ref="input"
+          placeholder="Send a message"
+          @keydown="onKeyDown"
+          v-model="content"
         />
       </div>
     </div>
   </div>
-  <audio ref="audioElement" src="../../page/assets/chat.mp3" preload="auto"></audio> 
+  <audio ref="audioElement" src="../../page/assets/chat.mp3" preload="auto"></audio>
 </template>
 <style lang="scss" scoped>
   @import '@/page/assets/styles/main.scss';
@@ -52,20 +52,20 @@
     overflow-x: hidden;
 
     .clear-button {
-      position: absolute; 
+      position: absolute;
       top: 10px;
-      right: 10px;  
+      right: 10px;
       cursor: pointer;
-      color: $text-muted; 
+      color: $text-muted;
       &:hover {
-        color: $text-normal; 
+        color: $text-normal;
       }
       i {
         font-size: 2.5em; // Doubles the default font size
         transition: transform 0.2s ease; // Add a transition for a smooth spin effect
       }
 
-      &:hover i { 
+      &:hover i {
         transform: rotate(360deg); // Rotate icon on hover
       }
     }
@@ -237,8 +237,8 @@ const length = 512; // max length of message
 
 const history = ref<HTMLUListElement | null>(null);
 // Correct way to create a ref for a dynamic element:
-const lastMessageRef = ref<HTMLLIElement | null>(null); 
-const MAX_CACHED_MESSAGES = 100; 
+const lastMessageRef = ref<HTMLLIElement | null>(null);
+const MAX_CACHED_MESSAGES = 100;
 const props = defineProps<{
   neko: typeof Neko;
 }>();
@@ -259,15 +259,15 @@ const messages = ref<Message[]>([]);
 const content = ref('');
 // Correctly type the computed property
 const allMessages = computed<Message[]>(() => [...messages.value]);
-// Correctly initialize cachedMessages 
-const cachedMessages = ref<Message[]>([]); 
-const isHovering = ref(false); 
+// Correctly initialize cachedMessages
+const cachedMessages = ref<Message[]>([]);
+const isHovering = ref(false);
 
 
 onMounted(() => {
   const storedMessages = localStorage.getItem('chatHistory');
   if (storedMessages) {
-    cachedMessages.value = JSON.parse(storedMessages).slice(-MAX_CACHED_MESSAGES); 
+    cachedMessages.value = JSON.parse(storedMessages).slice(-MAX_CACHED_MESSAGES);
   } else {
     cachedMessages.value = [];
   }
@@ -298,16 +298,15 @@ onUnmounted(() => {
   localStorage.setItem('chatHistory', JSON.stringify(messages.value));
 });
 
-// color values for username mapping
-const pastelColors = [
-  '#E6E6FA', '#B0E0E6', '#FFC0CB', '#FFE4E1', '#D3FFFA', 
-  '#FFFFE0', '#FAFAD2', '#90EE90', '#FFDAB9', '#FFB6C1',  // Light Pink
-  '#A9A9A9', '#F08080', '#FFA07A', '#FA8072', '#E9967A',  // More vibrant pastels
-  '#F5DEB3', '#DEB887', '#D2B48C', '#BC8F8F', '#F4A460',
-  '#DAA520' // Even more diverse pastel shades!
-]; 
-
-const userColorMap = new Map<string, string>(); // Store user-color mappings
+ const pastelColors = [
+  '#FFB3BA', // Light Red
+  '#FFDFBA', // Light Orange
+  '#FFFFBA', // Light Yellow
+  '#BAFFC9', // Light Green
+  '#BAE1FF', // Light Blue
+  '#D1BAFF', // Light Purple
+  '#FFCCF9'  // Bright Pink
+];
 
 function hashCode(str: string): number {
   let hash = 0;
@@ -318,7 +317,7 @@ function hashCode(str: string): number {
 }
 
 function getUserColor(userId: string): string {
-  const index = Math.abs(hashCode(userId)) % pastelColors.length; 
+  const index = Math.abs(hashCode(userId)) % pastelColors.length;
   return pastelColors[index];
 }
 
@@ -328,12 +327,6 @@ const messagesWithColors = computed(() => {
     color: getUserColor(message.id)
   }));
 });
-
-function intToHexColor(i: number): string {
-  let c = (i & 0x00FFFFFF).toString(16).toUpperCase();
-  c = '80' + c.substring(2); // Ensure the first two hex digits are '80' or higher
-  return '#' + '00000'.substring(0, 6 - c.length) + c;
-}
 
 function onMessageReceived(message: Message) {
   messages.value = [...messages.value, message];
@@ -411,7 +404,7 @@ function onKeyDown(event: KeyboardEvent) {
     created: new Date(),
     content: content.value,
   }
- 
+
   props.neko.sendBroadcast('chat', message)
   onMessageReceived(message)
   content.value = ''
@@ -429,9 +422,9 @@ function playNotificationSound() {
 // Watch the 'messages' array for changes
 
 function clearChat() {
-  if (!confirm('Are you sure you want to clear the chat history? This action cannot be undone.')) return; 
+  if (!confirm('Are you sure you want to clear the chat history? This action cannot be undone.')) return;
   messages.value = [];
-  cachedMessages.value = []; 
+  cachedMessages.value = [];
   localStorage.removeItem('chatHistory');
 };
 

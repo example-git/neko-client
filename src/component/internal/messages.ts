@@ -124,7 +124,7 @@ export class NekoMessages extends EventEmitter<NekoEvents> {
     this._state.control.touch.supported = conf.touch_events // TODO: Vue.Set
     this._state.connection.screencast = conf.screencast_enabled // TODO: Vue.Set
     this._state.connection.webrtc.videos = conf.webrtc.videos // TODO: Vue.Set
-  
+
     for (const id in conf.sessions) {
       this[EVENT.SESSION_CREATED](conf.sessions[id])
     }
@@ -247,7 +247,7 @@ export class NekoMessages extends EventEmitter<NekoEvents> {
     this._localLog.debug(`EVENT.SESSION_DELETED`, { id })
     delete this._state.sessions[id] // TODO: Vue.Delete
     this.emit('session.deleted', id)
-  }  
+  }
 
   protected [EVENT.SESSION_PROFILE]({ id, ...profile }: message.MemberProfile) {
     if (id in this._state.sessions) {

@@ -502,7 +502,7 @@ const props = defineProps<{
   hideNewMemberForm?: boolean;
 }>();
 
-const sessions = computed(() => props.neko.state.sessions as Record<string, StateModels.Session>)
+const sessions = ref<Record<string, StateModels.Session>>({});
 const membersWithoutSessions = computed(() => {
   return members.value.filter(({ id }: ApiModels.MemberData) => id && !(id in sessions.value)) as ApiModels.MemberData[]
 })

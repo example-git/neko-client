@@ -1,5 +1,5 @@
 <template>
-    <div ref="fullscreenContainer" class="fullscreen-container"> 
+    <div ref="fullscreenContainer" class="fullscreen-container">
       <div ref="component" class="neko-component">
       <div ref="container" class="neko-container">
       <button @click="enter" class="fullscreen-button small-buttons" v-if="!isFullscreen">
@@ -15,21 +15,18 @@
               viewBox="0 0 448 512"
               class="cog-icon"
               @click="toggleDropdown()"
-              @click.away="toggleDropdown()"
+              @click.prevent="toggleDropdown()"
               @click.stop="toggleDropdown()"
               tabindex="0"
-            >
-              <path
-                d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"
-              />
-            </svg>
+              path=cogsvg
+              ></svg>
             <div v-show="showScreenConfigMenu" class="screen-config-menu">
               <div
                 v-for="config in state.screen.configurations"
                 :key="`${config.width}x${config.height}@${config.rate}`"
                 @click="screenConfiguration = `${config.width}x${config.height}@${config.rate}`; toggleDropdown()"
                 @click.stop="toggleDropdown()"
-                @click.away="toggleDropdown()"
+                @click.prevent="toggleDropdown()"
                 class="screen-config-option"
               >
                 {{ `${config.width}x${config.height}@${config.rate}` }}
@@ -91,13 +88,13 @@
   .fullscreen-container {
   width: 100%;
   height: 100%;
-  position: relative; /* Ensure proper positioning */ 
+  position: relative; /* Ensure proper positioning */
   }
- 
-  .fullscreen-container:fullscreen { 
+
+  .fullscreen-container:fullscreen {
   width: 100%;
   height: 100%;
-  position: relative; /* Ensure proper positioning */ 
+  position: relative; /* Ensure proper positioning */
   }
 
 
@@ -216,6 +213,7 @@ fullscreenContainer::-webkit-media-controls-fullscreen-button {
 <script lang="ts" setup>
 import { ref, watch, computed, reactive, onMounted, onBeforeUnmount, defineEmits, onUnmounted } from 'vue'
 
+
 //export * as ApiModels from './api/models'
 //export * as StateModels from './types/state'
 //export * as webrtcTypes from './types/webrtc'
@@ -243,8 +241,6 @@ import Cursors from './cursors.vue'
 import { useFullscreen } from '@vueuse/core'
 
 const SCREEN_SYNC_THROTTLE = 500 // wait 500ms before reacting to automatic screen size change
-
-const isFirstMount = ref(true)
 const component = ref<HTMLElement | null>(null)
 const container = ref<HTMLElement | null>(null)
 const fullscreenContainer = ref<HTMLElement | null>(null);
@@ -252,6 +248,7 @@ const video = ref<HTMLVideoElement | null>(null)
 const overlay = ref<typeof Overlay | null>(null)
 const showScreenConfigMenu = ref(false)
 const volume = ref(100)
+const cogsvg = new Path2D("M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z")
 
 const { isFullscreen, enter, exit, toggle } = useFullscreen(fullscreenContainer)
 
@@ -260,8 +257,8 @@ const { isFullscreen, enter, exit, toggle } = useFullscreen(fullscreenContainer)
 // we need to grab video image before closing connection ans show that
 // while reconnecting, to not see black screen
 const fallbackImage = ref('')
-
 const api = new NekoApi()
+
 const observer = new ResizeObserver(onResize)
 const canvasSize = ref<Dimension>({ width: 0, height: 0 })
 const cursorDrawFunction = ref<CursorDrawFunction | null>(null)
@@ -279,8 +276,8 @@ const props = defineProps({
   showModal: Boolean,
   isFirstMount: Boolean,
 })
-
-const showModal = reactive<{ value: boolean }>({ value: props.showModal })
+const isFirstMount = reactive<{ value: boolean }>({ value: props.isFirstMount || false })
+const showModal = reactive<{ value: boolean }>({ value: props.showModal || true })
 
 
 /////////////////////////////
@@ -450,11 +447,13 @@ function setUrl(url?: string) {
   state.connection.token = token // TODO: Vue.Set
 
   // try to authenticate and connect
-  if (props.autoconnect) {      
+  if (props.autoconnect) {
     try {
       authenticate()
-    connect()
-    } catch {}
+      connect()
+    } catch(e) {
+      alert(e)
+    }
   }
 }
 
@@ -509,7 +508,9 @@ async function logout() {
 
   try {
     disconnect()
-  } catch {}
+  } catch(e) {
+    console.log(e)
+  }
 
   try {
     await api.default.logout()
@@ -763,14 +764,14 @@ onMounted(() => {
       },
       { once: true },
     )
-  })
+  })})
 
 watch(() => state.connection.websocket.connected, (connected) => {
   if (connected) {
     getvolume();
     setVolume(volume.value / 100);
   }
-});
+})
 
 function getvolume() {
   if (!localStorage.getItem('volume')) {
@@ -923,13 +924,12 @@ function toggleDropdown() {
 watch(() => screenConfiguration.value, (val) => {
   if (is_admin.value) {
     setScreenConfiguration(val)
-  }
-})
+  }})
 
 function clear() {
   // destroy video
   if (video.value) {
-    if ('srcObject' in video.value) {
+    if  ('srcObject' in video.value) {
       video.value.srcObject = null
     } else {
       // @ts-ignore

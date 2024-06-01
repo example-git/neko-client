@@ -113,6 +113,21 @@
     border-radius: 50px;
     transition: all 0.3s ease 0s;
 }
+.btn-login-2 {
+    color: #fff;
+    background: #5539cc;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    height: 45px; /* Match the height of the text box */
+    width: 100px;
+    margin-left: 30px;
+    padding-top: 2%;
+    border: none;
+    border-radius: 50px;
+    transition: all 0.3s ease 0s;
+}
 .btn-login:hover {
     text-shadow: 3px 3px rgba(0, 0, 0, 0.4);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);

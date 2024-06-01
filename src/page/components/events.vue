@@ -359,8 +359,8 @@
         space
       </button>
     </div>
-    </div>  
-    
+    </div>
+
 
     <div class="section">
       <h2>Chaos Monkey</h2>
@@ -390,7 +390,7 @@ $section-radius: 5px;
   font-size: 0.8em;
   margin-top: 5px;
   align-self: center;
-  justify-self: center; 
+  justify-self: center;
 }
 .small-buttons {
   width: fit-content;
@@ -402,7 +402,7 @@ $section-radius: 5px;
   margin-left: 12.5%;
   font-size: 1em;
   align-self: center;
-  justify-self: center; 
+  justify-self: center;
 }
 button {
   color: white;
@@ -410,7 +410,7 @@ margin-top: 5px;
 width: 75%;
 margin-left: 12.5%;
 align-self: center;
-justify-self: center; 
+justify-self: center;
 border: 0.5px solid white;
 background-color: #9d9d9d;
 accent-color: $style-primary;
@@ -427,7 +427,7 @@ cursor: pointer;
   margin-top: 5px;
   margin-left: 12.5%;
   align-self: center;
-  justify-self: center; 
+  justify-self: center;
 }
 &.small-buttons {
   font-size: 0.8emem;
@@ -440,7 +440,7 @@ cursor: pointer;
   margin-left: 12.5%;
   width: fit-content;
   align-self: center;
-  justify-self: center; 
+  justify-self: center;
 }
 }
 .container {
@@ -462,7 +462,7 @@ cursor: pointer;
 
     h2 {
       margin-top: 0;
-      text-align: center; 
+      text-align: center;
       align-self: center;
     }
 
@@ -483,7 +483,7 @@ cursor: pointer;
       width: 75%;
       margin-left: 12.5%;
       align-self: center;
-      justify-self: center; 
+      justify-self: center;
       border: 0.5px solid white;
       background-color: #242424;
       accent-color: $style-primary;
@@ -500,7 +500,7 @@ cursor: pointer;
         margin-top: 5px;
         margin-left: 12.5%;
         align-self: center;
-        justify-self: center; 
+        justify-self: center;
       }
       &.small-buttons {
         font-size: 0.8emem;
@@ -530,7 +530,7 @@ cursor: pointer;
         height: 1.3px;
       }
     }
-    
+
 
     textarea {
       width: 100%;
@@ -543,13 +543,13 @@ cursor: pointer;
     /* Center buttons within sections */
     h2 + .space-between {
       display: flex;
-      justify-content: center; 
-      flex-wrap: wrap;       
-      gap: 10px;           
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
 
       button {
-        flex: 1 0 auto;   
-        min-width: 60px; 
+        flex: 1 0 auto;
+        min-width: 60px;
         width: 50%;
       }
 

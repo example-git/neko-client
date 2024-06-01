@@ -1,6 +1,8 @@
 <template>
   <div class="header">
     <div class="neko">
+      <div class="user-pfp">
+      </div>
       <span class="logo"><b>n</b>.eko</span>
       <div class="server">
         <span>Server:</span>
@@ -19,6 +21,7 @@
 <style lang="scss" scoped>
   @import '../assets/styles/_variables.scss';
 
+
   .header {
   flex: 1;
   display: flex;
@@ -26,23 +29,42 @@
   align-items: center;
   height: 100%;
 
+  /* Position menu to the right */
+  .menu {
+    margin-left: auto; /* Pushes the menu to the right */
+    margin-right: 10px; /* Optional: Adds spacing from the right edge */
+  }
+
   .neko {
     flex: 1;
     display: flex;
-      justify-content: space-between;
-    align-items: center; 
+    align-items: center;
     width: 150px;
-    margin-left: 20px; 
+    margin-left: 20px;
 
     .logo {
       font-size: 30px;
       line-height: 30px;
+      // Remove any margin-right that was here
 
       b {
         font-weight: 900;
       }
     }
+    .user-pfp {
+        width: 30px;
+        height: 30px;
+        margin-top: 2px;
+        padding-right: 1%;
+        flex-shrink: 0; // Prevent the profile picture from shrinking
 
+
+        img {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%; // Makes the pfp circular
+        }
+      }
       .server {
         max-width: 850px;
         width: 100%;
@@ -55,8 +77,6 @@
           width: 100%;
         }
       }
-    }
-
     .menu {
       justify-self: flex-end;
       margin-right: 10px;
@@ -106,7 +126,7 @@ async function setUrl() {
 
   await props.neko.setUrl(url.value)
 }
-// implemented the toggle for the right side panel
+
 const emits = defineEmits(['toggle'])
 function toggleMenu() {
   //props.neko.toggleSide()

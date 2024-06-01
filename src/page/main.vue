@@ -63,9 +63,9 @@
             <div class="left-menu">
               <i
                 @click.left="cursorEnabled = !cursorEnabled"
-                :class="{'fas fa-solid fa-computer-mouse': true, 'active-cursor': cursorEnabled }" 
+                :class="{'fas fa-solid fa-computer-mouse': true, 'active-cursor': cursorEnabled }"
                 v-b-tooltip.hover title="Toggle Native Mouse"
-              /> 
+              />
             </div>
             <div class="controls">
               <template v-if="loaded && neko">
@@ -106,17 +106,16 @@
         </ul>
       </div>
       <div class="page-container" v-if="neko">
-        // will now show user list of active watchers on each tab
-        <NekoMembers  v-if="neko && tab === 'chat'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
-        <NekoMembers  v-if="neko && tab === 'members'  && neko.is_admin" :neko="neko"/>
-        <NekoMembers  v-if="neko && tab === 'events'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
-        <NekoMembers  v-if="neko && tab === 'media'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
-        <NekoMembers  v-if="neko && tab === 'filetransfer'" :neko="neko" :hideNewMemberForm="true" class="show-border"/>  
-        <NekoChat     :neko="neko" v-if="neko && tab === 'chat'"/>
+        <keep-alive>
+          <NekoMembers  v-if="neko && (tab === 'chat' || tab === 'members' || tab === 'events' || tab === 'media' || tab === 'filetransfer')" :neko="neko" :hideNewMemberForm="tab !== 'members'" class="show-border"/>
+        </keep-alive>
+        <keep-alive>
+          <NekoChat     :neko="neko" v-if="neko && tab === 'chat'"/>
+        </keep-alive>
         <NekoEvents   v-if="neko && tab === 'events' && neko.is_admin" :neko="neko"/>
         <NekoMedia    v-if="neko && tab === 'media' && neko.is_admin" :neko="neko"/>
         <!-- Plugins -->
-        <component v-for="(el, key) in pluginsComponents" :key="key" :is="el" :tab="tab" :neko="neko" />
+        <component v-for="(el, key) in pluginsComponents" :key="key" :is="el" :tab="tab" :neko="neko"/>
       </div>
     </aside>
   </div>
@@ -270,6 +269,7 @@
     display: flex;
     flex-direction: column;
 
+
     .tabs-container {
       background: $background-tertiary;
       height: $menu-height;
@@ -395,11 +395,11 @@
     //   // display: flex;
     //   // flex-direction: column;
     //   // hyphens: auto;
-    //   // overflow-y: auto; 
+    //   // overflow-y: auto;
     //   // padding: 5px;
     //   // box-sizing: border-box;
     //   // border-bottom: 1px solid rgba(0, 0, 0, 0.41); /* Add this line */
-    //   .page-container .below-members { 
+    //   .page-container .below-members {
     //     flex-grow: 0;
     //     flex-shrink: 0;
     //     padding: 5px;
@@ -415,7 +415,7 @@
       display: flex;
       flex-direction: column;
       hyphens: auto;
-      overflow-y: auto; 
+      overflow-y: auto;
       padding: 5px;
       box-sizing: border-box;
       border-bottom: 1px solid rgba(0, 0, 0, 0.41); /* Add this line */
@@ -427,8 +427,8 @@
         box-sizing: border-box;
         width: 100%; /* Ensure it takes full width */
       }
-      .show-border { 
-        border-bottom: 3px solid rgba(0, 0, 0, 0.3); 
+      .show-border {
+        border-bottom: 3px solid rgba(0, 0, 0, 0.3);
         border-radius: 10px;
         background: rgba(0, 0, 0, 0.3);
       }
@@ -463,7 +463,7 @@
     }
   }
   .active-cursor {
-  color: $style-primary; 
+  color: $style-primary;
 }
 
 .fa-computer-mouse {
@@ -525,8 +525,8 @@ import NekoMedia from './components/media.vue'
 import NekoChat from './components/chat.vue'
 
 const neko = ref<typeof NekoCanvas>()
-const cursorEnabled = ref<boolean>(false) 
-const usesCursor = ref(false)
+const cursorEnabled = ref<boolean>(true)
+
 
 const expanded = ref(!window.matchMedia('(max-width: 600px)').matches) // default to expanded on bigger screens
 const loaded = ref(false)
@@ -563,6 +563,8 @@ async function dialogUploadFiles(files: File[]) {
   }
 }
 
+const usesCursor = ref(false)
+
 function dialogCancel() {
   neko.value!.room.uploadDialogClose()
 }
@@ -570,11 +572,11 @@ function dialogCancel() {
 // Watch for changes in cursorEnabled
 watch(cursorEnabled, (isEnabled) => {
   if (isEnabled) {
-    enableCursor() 
+    enableCursor()
     console.log('cursor enabled')
   } else {
-    // disableCursor() 
-    disableCursor() 
+    // disableCursor()
+    disableCursor()
     console.log('cursor disabled')
   }
 });
@@ -592,7 +594,12 @@ onMounted(() => {
   if (url) {
     server.value = url
   }
-  
+  neko.value!.events.on('connection.status', () => {
+    if (cursorEnabled.value) {
+      enableCursor();
+    }
+  })
+
   //
   // connection events
   //
@@ -612,7 +619,7 @@ onMounted(() => {
     if (error) {
       alert('Connection closed with error: ' + error.message)
     } else {
-      alert('Connection closed without error.')
+      console.log('Connection closed without error.')
     }
   })
 
@@ -658,6 +665,7 @@ onMounted(() => {
   neko.value!.events.on('receive.unicast', (sender: string, subject: string, body: string) => {
     console.log('receive.unicast', sender, subject, body)
   })
+
   neko.value!.events.on('receive.broadcast', (sender: string, subject: string, body: string) => {
     console.log('receive.broadcast', sender, subject, body)
   })
@@ -702,70 +710,84 @@ onMounted(() => {
   })
   neko.value!.control.on('overlay.contextmenu', (e: MouseEvent) => {
     console.log('control: overlay.contextmenu', e)
-  })
+  })})
 
-  // custom inactive cursor draw function
+
+const pastelColors = [
+  '#FFB3BA', // Light Red
+  '#FFDFBA', // Light Orange
+  '#FFFFBA', // Light Yellow
+  '#BAFFC9', // Light Green
+  '#BAE1FF', // Light Blue
+  '#D1BAFF', // Light Purple
+  '#FFCCF9'  // Bright Pink
+];
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return hash;
+}
+
+function getUserColor(userId: string): string {
+  const index = Math.abs(hashCode(userId)) % pastelColors.length;
+  return pastelColors[index];
+}
+
+function enableCursor() {
   neko.value!.setInactiveCursorDrawFunction(
     (ctx: CanvasRenderingContext2D, x: number, y: number, sessionId: string) => {
       const cursorTag = neko.value!.state.sessions[sessionId]?.profile.name || ''
-      const colorLight = '#CCDFF6'
-      const colorDark = '#488DDE'
+      const color = getUserColor(sessionId || '')
+      const colorLight = color
+      const colorDark = '#000000'
 
       // get current cursor position
       x -= 4
       y -= 4
 
       // draw arrow path
-      const arrowPath = new Path2D('M5 5L26 16.5L15.9929 19.513L9.94118 28L5 5Z')
+      const arrowPath = new Path2D('M5 5L20 20L14 20L16 25L12 26L10 20L5 25Z')
+      ctx.save(); // Save the current state
+      ctx.globalAlpha = 0.75
       ctx.translate(x, y)
+      ctx.scale(1.25, 1.25); // Scale the drawing context
       ctx.fillStyle = colorLight
       ctx.fill(arrowPath)
       ctx.lineWidth = 1.5
       ctx.lineJoin = 'miter'
-      ctx.miterLimit = 10
+      ctx.miterLimit = 50
       ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
       ctx.strokeStyle = colorDark
-      ctx.stroke(arrowPath)
+      ctx.stroke(arrowPath); // Draw the path
 
       // draw cursor tag
       if (cursorTag) {
-        const x = 20 // box margin x
-        const y = 20 // box margin y
+        const x = 22 // box margin x
+        const y = 28 // box margin y
 
-        ctx.globalAlpha = 0.5
-        ctx.font = '10px Arial, sans-serif'
+        ctx.font = '12px Arial, sans-serif'
         ctx.textBaseline = 'top'
         ctx.shadowColor = 'black'
         ctx.shadowBlur = 2
         ctx.lineWidth = 2
-        ctx.fillStyle = 'black'
+        ctx.fillStyle = '#000000c0'
         ctx.strokeText(cursorTag, x, y)
         ctx.shadowBlur = 0
-        ctx.fillStyle = 'white'
+        ctx.fillStyle = '#ffffffc0'
         ctx.fillText(cursorTag, x, y)
       }
+      ctx.restore(); // Restore the state
     },
   )
-
-  toggleCursor()
-})
-
-const usesCursor = ref(false)
-
-function toggleCursor() {
-  if (usesCursor.value) {
-    neko.value!.setCursorDrawFunction()
-    usesCursor.value = false
-    return
-  }
-
-  // custom cursor draw function
   neko.value!.setCursorDrawFunction(
-    (ctx: CanvasRenderingContext2D, x: number, y: number, {}, {}, sessionId: string) => {
+    (ctx: CanvasRenderingContext2D, x: number, y: number, sessionId: string) => {
       const cursorTag = neko.value!.state.sessions[sessionId]?.profile.name || ''
-      const colorLight = '#CCDFF6'
-      const colorDark = '#488DDE'
+      const color = getUserColor(sessionId || '')
+      const colorLight = color
+      const colorDark = '#000000'
       const fontColor = '#ffffff'
 
       // get current cursor position
@@ -773,55 +795,90 @@ function toggleCursor() {
       y -= 4
 
       // draw arrow path
-      const arrowPath = new Path2D('M5 5L26 16.5L15.9929 19.513L9.94118 28L5 5Z')
+      const arrowPath = new Path2D('M5 5L20 20L14 20L16 25L12 26L10 20L5 25Z')
+      ctx.save(); // Save the current state
+      ctx.globalAlpha = 1
       ctx.translate(x, y)
+      ctx.scale(1.25, 1.25); // Scale the drawing context
       ctx.fillStyle = colorLight
       ctx.fill(arrowPath)
-      ctx.lineWidth = 2
+      ctx.lineWidth = 1.5
       ctx.lineJoin = 'miter'
-      ctx.miterLimit = 10
+      ctx.miterLimit = 50
       ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
       ctx.strokeStyle = colorDark
-      ctx.stroke(arrowPath)
+      ctx.stroke(arrowPath); // Draw the path
 
       // draw cursor tag
       if (cursorTag) {
-        const fontSize = 12
-        const boxPaddingX = 9
-        const boxPaddingY = 6
-
         const x = 22 // box margin x
         const y = 28 // box margin y
 
-        // prepare tag text
-        ctx.font = '500 ' + fontSize + 'px Roboto, sans-serif'
-        ctx.textBaseline = 'ideographic'
-
-        // create tag container
-        const txtWidth = ctx.measureText(cursorTag).width
-        const w = txtWidth + boxPaddingX * 2
-        const h = fontSize + boxPaddingY * 2
-        const r = Math.min(w / 2, h / 2)
-        ctx.beginPath()
-        ctx.moveTo(x + r, y)
-        ctx.arcTo(x + w, y, x + w, y + h, r) // Top-Right
-        ctx.arcTo(x + w, y + h, x, y + h, r) // Bottom-Right
-        ctx.arcTo(x, y + h, x, y, r * 2) // Bottom-Left
-        ctx.arcTo(x, y, x + w, y, r * 2) // Top-Left
-        ctx.closePath()
-        ctx.fillStyle = colorDark
-        ctx.fill()
-
-        // fill in tag text
-        ctx.fillStyle = fontColor
-        ctx.fillText(cursorTag, x + boxPaddingX, y + fontSize + boxPaddingY)
+        ctx.font = '12px Arial, sans-serif'
+        ctx.textBaseline = 'top'
+        ctx.shadowColor = 'black'
+        ctx.shadowBlur = 2
+        ctx.lineWidth = 2
+        ctx.fillStyle = '#000000'
+        ctx.strokeText(cursorTag, x, y)
+        ctx.shadowBlur = 0
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(cursorTag, x, y)
       }
+      ctx.restore(); // Restore the state
     },
   )
-
-  usesCursor.value = true
 }
+
+function disableCursor() {
+  // Clear both active and inactive cursor functions
+  neko.value!.setCursorDrawFunction()
+  neko.value!.setInactiveCursorDrawFunction(
+    (ctx: CanvasRenderingContext2D, x: number, y: number, sessionId: string) => {
+      const cursorTag = neko.value!.state.sessions[sessionId]?.profile.name || ''
+      const colorLight = '#ffffff00'
+      const colorDark = '#000000'
+
+      // get current cursor position
+      x -= 4
+      y -= 4
+
+      // draw arrow path
+      const arrowPath = new Path2D('M5 5L20 20L14 20L16 25L12 26L10 20L5 25Z')
+      ctx.save(); // Save the current state
+      ctx.globalAlpha = 0.5
+      ctx.translate(x, y)
+      ctx.scale(1.25, 1.25); // Scale the drawing context
+      ctx.fillStyle = colorLight
+      ctx.fill(arrowPath)
+      ctx.lineWidth = 1.5
+      ctx.lineJoin = 'miter'
+      ctx.miterLimit = 50
+      ctx.lineCap = 'round'
+      ctx.strokeStyle = colorDark
+      ctx.stroke(arrowPath); // Draw the path
+
+      // draw cursor tag
+      if (cursorTag) {
+        const x = 22 // box margin x
+        const y = 28 // box margin y
+
+        ctx.font = '12px Arial, sans-serif'
+        ctx.textBaseline = 'top'
+        ctx.shadowColor = 'black'
+        ctx.shadowBlur = 2
+        ctx.lineWidth = 2
+        ctx.fillStyle = '#00000080'
+        ctx.strokeText(cursorTag, x, y)
+        ctx.shadowBlur = 0
+        ctx.fillStyle = '#ffffffc0'
+        ctx.fillText(cursorTag, x, y)
+      }
+      ctx.restore(); // Restore the state
+    },
+  )
+}
+
 </script>
 
 <style>
